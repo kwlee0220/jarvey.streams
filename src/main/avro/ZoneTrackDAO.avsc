@@ -1,0 +1,22 @@
+{
+	"name": "ZoneTrackDAO",
+	"namespace": "jarvey.track.model",
+	"type": "record",
+	"fields": [
+		{ "name": "node_id", "type": "string" },
+		{ "name": "luid", "type": "long" },
+		{ "name": "zone_id_list", "type": { "type": "array", "items": "string" } },
+		{ "name": "state",
+			"type": {
+				"type": "enum",
+				"name": "ZoneTrackState",
+				"symbols": [ "TRACKED", "DELETED" ]
+			}
+		},
+		{ "name": "centroid", "type": "jarvey.track.model.PointDAO" },
+		{ "name": "location", "type": "jarvey.track.model.BBoxDAO" },
+		{ "name": "world_coords", "type": "jarvey.track.model.PointDAO" },
+		{ "name": "frame_index", "type": "long" },
+		{ "name": "timestamp", "type": "long" }
+	]
+}

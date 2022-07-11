@@ -1,0 +1,30 @@
+{
+	"name": "ZoneChangeEventDAO",
+	"namespace": "jarvey.track.model",
+	"type": "record",
+	"fields": [
+		{ "name": "node", "type": "string" },
+		{ "name": "luid", "type": "long" },
+		{ "name": "zone", "type": "string" },
+		{ "name": "state",
+			"type": {
+				"type": "enum",
+				"name": "ZoneChangeState",
+				"symbols": [ "ENTER", "LEFT", "DELETED" ]
+			}
+		},
+		{ "name": "centroid",
+			"type": {
+				"type": "record",
+				"name": "PointDAO",
+				"fields": [
+					{ "name": "x", "type": "double" },
+					{ "name": "y", "type": "double" }
+				]
+			}
+		},
+		{ "name": "world_coords", "type": "jarvey.track.model.PointDAO" },
+		{ "name": "frame_index", "type": "long" },
+		{ "name": "ts", "type": "long" }
+	]
+}

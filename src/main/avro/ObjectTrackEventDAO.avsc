@@ -1,0 +1,22 @@
+{
+	"name": "ObjectTrackEventDAO",
+	"namespace": "jarvey.track.model",
+	"type": "record",
+	"fields": [
+		{ "name": "node", "type": "string" },
+		{ "name": "luid", "type": "long" },
+		{ "name": "zone", "type": { "type": "array", "items": "string" } },
+		{ "name": "state",
+			"type": {
+				"type": "enum",
+				"name": "ObjectTrackState",
+				"symbols": [ "NULL", "Tentative", "Confirmed", "TemporarilyLost", "Deleted" ]
+			}
+		},
+		{ "name": "location", "type": "jarvey.track.model.BBoxDAO" },
+		{ "name": "frame_index", "type": "long" },
+		{ "name": "ts", "type": "long" },
+		{ "name": "world_coords", "type": "jarvey.track.model.PointDAO" },
+		{ "name": "distance", "type": "double" }
+	]
+}

@@ -1,0 +1,9 @@
+{
+	"name": "BBoxDAO",
+	"namespace": "jarvey.track.model",
+	"type": "record",
+	"fields": [
+		{ "name": "topLeft", "type": "jarvey.track.model.PointDAO" },
+		{ "name": "bottomRight", "type": "jarvey.track.model.PointDAO" }
+	]
+}

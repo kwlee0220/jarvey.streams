@@ -1,0 +1,9 @@
+{
+	"name": "PointDAO",
+	"namespace": "jarvey.track.model",
+	"type": "record",
+	"fields": [
+		{ "name": "x", "type": "double" },
+		{ "name": "y", "type": "double" }
+	]
+}

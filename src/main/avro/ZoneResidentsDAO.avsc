@@ -1,0 +1,12 @@
+{
+	"name": "ZoneResidentsDAO",
+	"namespace": "jarvey.track.model",
+	"type": "record",
+	"fields": [
+		{ "name": "node_id", "type": "string" },
+		{ "name": "zone_id", "type": "string" },
+		{ "name": "residents", "type": { "type": "array", "items": "long" } },
+		{ "name": "frame_index", "type": "long" },
+		{ "name": "timestamp", "type": "long" }
+	]
+}

@@ -20,6 +20,8 @@ import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
 
+import jarvey.streams.zone.ZoneLineRelation;
+
 /**
  * 
  * @author Kang-Woo Lee (ETRI)
@@ -35,6 +37,7 @@ public class GsonUtils {
 		builder.registerTypeAdapter(Point.class, new PointAdapter());
 		builder.registerTypeAdapter(Envelope.class, new EnvelopeAdater());
 		builder.registerTypeAdapter(LineSegment.class, new LineSegmentAdapter());
+		builder.registerTypeAdapter(ZoneLineRelation.class, new ZoneLineRelationAdapter());
 		s_gson = builder.create();
 	}
 	

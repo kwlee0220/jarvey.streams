@@ -1,7 +1,7 @@
 /**
  * 
  */
-package jarvey.streams.model;
+package jarvey.streams.zone;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;

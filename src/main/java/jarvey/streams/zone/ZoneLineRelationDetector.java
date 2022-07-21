@@ -1,7 +1,7 @@
 /**
  * 
  */
-package jarvey.streams.process;
+package jarvey.streams.zone;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -16,8 +16,6 @@ import org.locationtech.jts.geom.Polygon;
 
 import com.google.common.collect.Maps;
 
-import jarvey.streams.model.LineTrack;
-import jarvey.streams.model.ZoneLineCross;
 import utils.func.KeyValue;
 import utils.geo.util.GeoUtils;
 import utils.jdbc.JdbcProcessor;
@@ -29,13 +27,12 @@ import utils.stream.KVFStream;
  * 
  * @author Kang-Woo Lee (ETRI)
  */
-public class ZoneLineCrossTransform implements ValueMapper<LineTrack, Iterable<ZoneLineCross>> {
+public class ZoneLineRelationDetector implements ValueMapper<LineTrack, Iterable<ZoneLineRelationEvent>> {
 	private final JdbcProcessor m_jdbc;
 	private final Map<String, Map<String,Polygon>> m_zoneGroups;
 	
-	ZoneLineCrossTransform(JdbcProcessor jdbc) {
+	ZoneLineRelationDetector(JdbcProcessor jdbc) {
 		m_jdbc = jdbc;
-		
 		try {
 			m_zoneGroups = loadZoneGroups(m_jdbc);
 		}
@@ -45,16 +42,16 @@ public class ZoneLineCrossTransform implements ValueMapper<LineTrack, Iterable<Z
 	}
 
 	@Override
-	public Iterable<ZoneLineCross> apply(LineTrack ev) {
+	public Iterable<ZoneLineRelationEvent> apply(LineTrack ev) {
 		if ( ev.isDeleted() ) {
 			return Arrays.asList(DELETED(ev));
 		}
 		
 		Map<String,Polygon> zoneGroup = m_zoneGroups.get(ev.getNodeId());
 		LineString line = GeoUtils.toLineString(ev.getLine());
-		List<ZoneLineCross> assignments = KVFStream.from(zoneGroup)
+		List<ZoneLineRelationEvent> assignments = KVFStream.from(zoneGroup)
 													.filterValue(zone -> zone.intersects(line))
-													.mapValue(zone -> getCrossType(zone, line))
+													.mapValue(zone -> getRelation(zone, line))
 													.map(kv -> toZoneLineCross(ev, kv))
 													.toList();
 		if ( assignments.size() > 0 ) {
@@ -65,35 +62,35 @@ public class ZoneLineCrossTransform implements ValueMapper<LineTrack, Iterable<Z
 		}
 	}
 	
-	private ZoneLineCross toZoneLineCross(LineTrack track, KeyValue<String,String> kv) {
-		return new ZoneLineCross(track.getNodeId(), track.getLuid(), kv.value(), kv.key(),
-									track.getLine(), track.getFrameIndex(), track.getTimestamp());
+	private ZoneLineRelationEvent toZoneLineCross(LineTrack track, KeyValue<String,ZoneLineRelation> keyedRel) {
+		return new ZoneLineRelationEvent(track.getNodeId(), track.getLuid(), keyedRel.value(), keyedRel.key(),
+										track.getLine(), track.getFrameIndex(), track.getTimestamp());
 	}
 	
-	private String getCrossType(Polygon zone, LineString line) {
+	private ZoneLineRelation getRelation(Polygon zone, LineString line) {
 		boolean startCond = zone.intersects(line.getStartPoint());
 		boolean endCond = zone.intersects(line.getEndPoint());
 		if ( startCond && endCond ) {
-			return ZoneLineCross.STATE_INSIDE;
+			return ZoneLineRelation.Inside;
 		}
 		else if ( !startCond && endCond ) {
-			return ZoneLineCross.STATE_ENTERED;
+			return ZoneLineRelation.Entered;
 		}
 		else if ( startCond && !endCond ) {
-			return ZoneLineCross.STATE_LEFT;
+			return ZoneLineRelation.Left;
 		}
 		else {
-			return ZoneLineCross.STATE_THROUGH;
+			return ZoneLineRelation.Through;
 		}
 	}
 
-	private static ZoneLineCross DELETED(LineTrack track) {
-		return new ZoneLineCross(track.getNodeId(), track.getLuid(), ZoneLineCross.STATE_DELETED,
+	private static ZoneLineRelationEvent DELETED(LineTrack track) {
+		return new ZoneLineRelationEvent(track.getNodeId(), track.getLuid(), ZoneLineRelation.Deleted,
 									null, null, track.getFrameIndex(), track.getTimestamp());
 	}
 
-	private static ZoneLineCross UNASSIGNED(LineTrack track) {
-		return new ZoneLineCross(track.getNodeId(), track.getLuid(), ZoneLineCross.STATE_UNASSIGNED,
+	private static ZoneLineRelationEvent UNASSIGNED(LineTrack track) {
+		return new ZoneLineRelationEvent(track.getNodeId(), track.getLuid(), ZoneLineRelation.Unassigned,
 									null, track.getLine(), track.getFrameIndex(), track.getTimestamp());
 	}
 	

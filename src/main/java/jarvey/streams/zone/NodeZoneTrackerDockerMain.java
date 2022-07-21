@@ -1,7 +1,7 @@
 /**
  * 
  */
-package jarvey.streams.process;
+package jarvey.streams.zone;
 
 import java.util.Map;
 import java.util.Properties;
@@ -13,7 +13,6 @@ import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.Topology;
 import org.apache.kafka.streams.state.HostInfo;
 
-import io.confluent.kafka.serializers.KafkaAvroSerializerConfig;
 import utils.NetUtils;
 import utils.jdbc.JdbcProcessor;
 
@@ -27,27 +26,23 @@ public class NodeZoneTrackerDockerMain {
 
 		String appId = envs.getOrDefault("KAFKA_APPLICATION_ID_CONFIG", "node-track");
 		String kafkaServers = envs.getOrDefault("KAFKA_BOOTSTRAP_SERVERS_CONFIG", "localhost:9092");
-		String nodeTrackTopic = envs.getOrDefault("DNA_TOPIC_TRACKS", "node-tracks");
-		String locationEventsTopic = envs.getOrDefault("DNA_TOPIC_LOCATION_EVENTS", "location-events");
-		String zoneLocations = envs.get("DNA_ZONE_LOCATIONS");
-		String zoneResidents = envs.get("DNA_ZONE_RESIDENTS");
+		String topicNodeTracks = envs.getOrDefault("DNA_TOPIC_TRACKS", "node-tracks");
+		String topicZoneLineRelations = envs.get("DNA_TOPIC_ZONE_LINE_RELATIONS");
+		String topicLocationEvents = envs.getOrDefault("DNA_TOPIC_LOCATION_EVENTS", "location-events");
+		String topicZoneLocations = envs.get("DNA_TOPIC_ZONE_LOCATIONS");
+		String topicZoneResidents = envs.get("DNA_TOPIC_ZONE_RESIDENTS");
 		
 		String jdbcUrl = envs.getOrDefault("DNA_ZONE_DB_JDBC_URL", "jdbc:postgresql://localhost:5432/dna");
 		String user = envs.getOrDefault("DNA_ZONE_DB_USER", "dna");
 		String password = envs.getOrDefault("DNA_ZONE_DB_PASSWORD", "urc2004");
 		JdbcProcessor jdbc = JdbcProcessor.create(jdbcUrl, user, password);
 		
-//		Map<String,Polygon> testGroup = Maps.newHashMap();
-//		testGroup.put("zone01", GeoUtils.toPolygon(new Coordinate[]{685, 163, 830, 163, 830, 407, 685, 407, 685, 163}));
-//		testGroup.put("zone02", GeoUtils.toPolygon(new Coordinate[]{1459, 332, 1498, 332, 1498, 588, 1459, 588, 1459, 332}));
-//		testGroup.put("zone03", GeoUtils.toPolygon(new Coordinate[]{154, 700, 1329, 700, 1329, 900, 154, 900, 154, 700}));
-//		zoneGroups.put("etri:051", testGroup);
-		
 		Topology topology = TrackTopologyBuilder.create()
-												.setNodeTracksTopic(nodeTrackTopic)
-												.setLocationEventsTopic(locationEventsTopic)
-												.setZoneLocationsName(zoneLocations)
-												.setZoneResidentsName(zoneResidents)
+												.setNodeTracksTopic(topicNodeTracks)
+												.setZoneLineRelationsTopic(topicZoneLineRelations)
+												.setLocationEventsTopic(topicLocationEvents)
+												.setZoneLocationsTopic(topicZoneLocations)
+												.setZoneResidentsTopic(topicZoneResidents)
 												.setJdbcProcessor(jdbc)
 												.build();
 		
@@ -62,7 +57,7 @@ public class NodeZoneTrackerDockerMain {
 		config.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, ByteArraySerde.class);
 		config.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaServers);
 		config.put(StreamsConfig.APPLICATION_SERVER_CONFIG, appServerUrl);
-		config.put(KafkaAvroSerializerConfig.SCHEMA_REGISTRY_URL_CONFIG, "http://localhost:8081");
+//		config.put(KafkaAvroSerializerConfig.SCHEMA_REGISTRY_URL_CONFIG, "http://localhost:8081");
 		
 		KafkaStreams streams = new KafkaStreams(topology, config);
 		Runtime.getRuntime().addShutdownHook(new Thread(streams::close));
@@ -71,8 +66,7 @@ public class NodeZoneTrackerDockerMain {
 		
 		// start the REST service
 		HostInfo hostInfo = new HostInfo(restHost, restPort);
-		RESTfulObjectTrackingService service = new RESTfulObjectTrackingService(hostInfo, streams,
-																				zoneLocations, zoneResidents);
+		RESTfulObjectTrackingService service = new RESTfulObjectTrackingService(hostInfo, streams);
 		service.start();
 	}
 }

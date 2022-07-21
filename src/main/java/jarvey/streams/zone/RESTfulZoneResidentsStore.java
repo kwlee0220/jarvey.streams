@@ -1,7 +1,7 @@
 /**
  * 
  */
-package jarvey.streams.process;
+package jarvey.streams.zone;
 
 import java.io.IOException;
 import java.util.List;
@@ -10,37 +10,39 @@ import org.apache.kafka.streams.state.HostInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import jarvey.streams.model.GlobalZoneId;
-import jarvey.streams.model.Residents;
+import utils.func.KeyValue;
+import utils.stream.FStream;
+
 import jarvey.streams.serialization.json.GsonUtils;
+
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
-import utils.func.KeyValue;
-import utils.stream.FStream;
 
 /**
  * 
  * @author Kang-Woo Lee (ETRI)
  */
-public class RESTfulZoneResidentStore {
-	private final static Logger s_logger = LoggerFactory.getLogger(RESTfulZoneResidentStore.class);
+public class RESTfulZoneResidentsStore implements ZoneResidentsStore {
+	private final static Logger s_logger = LoggerFactory.getLogger(RESTfulZoneResidentsStore.class);
 
 	private final HostInfo m_hostInfo;
 	private final String m_storeName;
 	
-	RESTfulZoneResidentStore(HostInfo hostInfo, String storeName) {
+	RESTfulZoneResidentsStore(HostInfo hostInfo, String storeName) {
 		m_hostInfo = hostInfo;
 		m_storeName = storeName;
 	}
-	
-	public Residents getResidentsInZone(GlobalZoneId gzone) throws IOException {
+
+	@Override
+	public Residents getResidentsOfZone(GlobalZoneId gzone) {
 		String path = String.format("local/%s/%s/%s", m_storeName, gzone.getNodeId(), gzone.getZoneId());
 		String respJson = callRemote(m_hostInfo, path);
 		return (respJson != null) ? GsonUtils.parseJson(respJson, Residents.class) : null;
 	}
-	
-	public List<KeyValue<GlobalZoneId,Residents>> getResidentsInNode(String nodeId) throws IOException {
+
+	@Override
+	public List<KeyValue<GlobalZoneId,Residents>> getResidentsOfNode(String nodeId) {
 		String path = String.format("local/%s/%s", m_storeName, nodeId);
 		String respJson = callRemote(m_hostInfo, path);
 		
@@ -48,8 +50,9 @@ public class RESTfulZoneResidentStore {
 						.map(kv -> KeyValue.of(kv.getKey(), kv.getValue()))
 						.toList();
 	}
-	
-	public List<KeyValue<GlobalZoneId,Residents>> getResidentsAll() throws IOException {
+
+	@Override
+	public List<KeyValue<GlobalZoneId,Residents>> getResidentsAll() {
 		String path = String.format("local/%s", m_storeName);
 		String respJson = callRemote(m_hostInfo, path);
 		
@@ -58,10 +61,12 @@ public class RESTfulZoneResidentStore {
 						.toList();
 	}
 	
-	private String callRemote(HostInfo hostInfo, String path) throws IOException {
+	private String callRemote(HostInfo hostInfo, String path) {
 		OkHttpClient client = new OkHttpClient();
 		
 		String url = String.format("http://%s:%d/%s", hostInfo.host(), hostInfo.port(), path);
+		s_logger.debug("call RESTful service: url={}", url);
+		
 		Request request = new Request.Builder().url(url).build();
 		try (Response resp = client.newCall(request).execute()) {
 			switch ( resp.code() ) {
@@ -72,6 +77,9 @@ public class RESTfulZoneResidentStore {
 				default:
 					throw new IOException("HTTP status: " + resp.code());
 			}
+		}
+		catch ( IOException e ) {
+			throw new RuntimeException(String.format("fails to HTTP call: url=%s", url));
 		}
 	}
 }

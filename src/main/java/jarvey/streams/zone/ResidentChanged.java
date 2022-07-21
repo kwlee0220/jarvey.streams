@@ -1,4 +1,4 @@
-package jarvey.streams.model;
+package jarvey.streams.zone;
 
 import java.util.Set;
 
@@ -17,8 +17,13 @@ public final class ResidentChanged {
 	@SerializedName("ts") private long m_ts;
 	
 	public static ResidentChanged from(GlobalZoneId gzone, Residents residents) {
-		return new ResidentChanged(gzone.getNodeId(), gzone.getZoneId(), residents.getLuids(),
-									residents.getFrameIndex(), residents.getTimestamp());
+		if ( residents != null ) {
+			return new ResidentChanged(gzone.getNodeId(), gzone.getZoneId(), residents.getLuids(),
+										residents.getFrameIndex(), residents.getTimestamp());
+		}
+		else {
+			return null;
+		}
 	}
 	
 	public ResidentChanged(String nodeId, String zone, Set<Long> luids, long frameIndex, long ts) {

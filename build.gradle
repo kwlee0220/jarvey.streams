@@ -44,6 +44,7 @@ repositories {
 }
 
 ext {
+	log4j_version = '2.18.0'
 	gson_version = '2.9.0'
 	
 	geotools_version = '26.1'
@@ -60,6 +61,11 @@ ext {
 dependencies {
 	compile(project(":utils"))
 	compile(project(":utils.geo"))
+	
+	// Log4j2
+	implementation "org.apache.logging.log4j:log4j-api:${log4j_version}"
+	implementation "org.apache.logging.log4j:log4j-core:${log4j_version}"
+	implementation "org.apache.logging.log4j:log4j-slf4j-impl:${log4j_version}"
 	
 	implementation "com.google.code.gson:gson:${gson_version}"
 	implementation "org.apache.avro:avro:${avro_version}"

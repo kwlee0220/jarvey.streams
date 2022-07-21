@@ -1,7 +1,7 @@
 /**
  * 
  */
-package jarvey.streams.process;
+package jarvey.streams.zone;
 
 import java.io.IOException;
 import java.util.List;
@@ -22,10 +22,6 @@ import org.slf4j.LoggerFactory;
 
 import io.javalin.Javalin;
 import io.javalin.http.Context;
-import jarvey.streams.model.GUID;
-import jarvey.streams.model.GlobalZoneId;
-import jarvey.streams.model.Residents;
-import jarvey.streams.model.ZoneLocations;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -33,6 +29,8 @@ import utils.func.KeyValue;
 import utils.jdbc.JdbcProcessor;
 import utils.stream.FStream;
 import utils.stream.KVFStream;
+
+import jarvey.streams.model.GUID;
 
 /**
  * 

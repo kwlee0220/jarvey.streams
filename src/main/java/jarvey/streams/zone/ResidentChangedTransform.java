@@ -87,6 +87,8 @@ public class ResidentChangedTransform implements ValueTransformer<ZoneLineRelati
 					m_residents.delete(gzone);
 				}
 				return Collections.emptyList();
+			case Through:
+				return Collections.emptyList();
 			default:
 				throw new AssertionError("ZoneLineCross event have a invalid state: ev=" + ev);
 		}

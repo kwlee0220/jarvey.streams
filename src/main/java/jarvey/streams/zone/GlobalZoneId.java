@@ -1,6 +1,3 @@
-/**
- * 
- */
 package jarvey.streams.zone;
 
 import java.nio.charset.StandardCharsets;

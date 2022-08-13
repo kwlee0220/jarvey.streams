@@ -48,6 +48,9 @@ public class ZoneLineRelationDetector implements ValueMapper<LineTrack, Iterable
 		}
 		
 		Map<String,Polygon> zoneGroup = m_zoneGroups.get(ev.getNodeId());
+		if ( zoneGroup == null ) {
+			return Arrays.asList(UNASSIGNED(ev));
+		}
 		LineString line = GeoUtils.toLineString(ev.getLine());
 		List<ZoneLineRelationEvent> assignments = KVFStream.from(zoneGroup)
 													.filterValue(zone -> zone.intersects(line))

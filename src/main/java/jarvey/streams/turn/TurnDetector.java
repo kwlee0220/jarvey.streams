@@ -44,8 +44,13 @@ public class TurnDetector implements ValueMapper<ZoneSequence, Iterable<ObjectTu
 	}
 	
 	private String toSignature(ZoneSequence seq) {
-		String visitStr = FStream.from(seq.getZoneIdSequence()).join('-');
-		String endDelim = seq.getLastZoneTravel().isClosed() ? "]" : ")";
-		return String.format("[%s%s", visitStr, endDelim);
+		if ( seq.getVisitCount() > 0 ) {
+			String visitStr = FStream.from(seq.getZoneIdSequence()).join('-');
+			String endDelim = seq.getLastZoneTravel().isClosed() ? "]" : ")";
+			return String.format("[%s%s", visitStr, endDelim);
+		}
+		else {
+			return "";
+		}
 	}
 }

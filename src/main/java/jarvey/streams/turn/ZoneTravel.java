@@ -65,6 +65,10 @@ public final class ZoneTravel {
 		return this;
 	}
 	
+	public ZoneTravel duplicate() {
+		return new ZoneTravel(m_zoneId, m_enterFrameIndex, m_enterTs, m_leaveFrameIndex, m_leaveTs);
+	}
+	
 	@Override
 	public String toString() {
 		String leaveIdxStr = m_leaveFrameIndex > 0 ? "" + m_leaveFrameIndex : "?";

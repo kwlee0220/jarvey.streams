@@ -64,7 +64,7 @@ public final class TurnTopologyBuilder {
 		
 		KStream<String,ObjectTurn> turns
 			= builder.stream(m_topicLocationEvents, Consumed(KEY_SERDE, ZoneLineRelationEvent.class))
-					.transformValues(() -> new ZoneSequenceCollector(STORE_ZONE_SEQUENCES), STORE_ZONE_SEQUENCES)
+					.flatTransformValues(() -> new ZoneSequenceCollector(STORE_ZONE_SEQUENCES), STORE_ZONE_SEQUENCES)
 					.flatMapValues(new TurnDetector());
 		turns.print(Printed.<String, ObjectTurn>toSysOut().withLabel("turns"));
 		if ( m_topicTurnEvents != null ) {

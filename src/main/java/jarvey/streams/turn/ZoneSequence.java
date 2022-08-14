@@ -8,8 +8,6 @@ import com.google.gson.annotations.SerializedName;
 
 import utils.stream.FStream;
 
-import jarvey.streams.zone.ZoneLineRelationEvent;
-
 
 /**
  * 
@@ -20,12 +18,12 @@ public final class ZoneSequence {
 	@SerializedName("luid") private long m_luid;
 	@SerializedName("visits") private List<ZoneTravel> m_visits;
 	
-	public static ZoneSequence from(ZoneLineRelationEvent ev) {
-		return new ZoneSequence(ev.getNodeId(), ev.getLuid(), Lists.newArrayList(ZoneTravel.open(ev)));
-	}
-	
 	public static ZoneSequence from(String nodeId, long luid, ZoneTravel first) {
 		return new ZoneSequence(nodeId, luid, Lists.newArrayList(first));
+	}
+	
+	public static ZoneSequence empty(String nodeId, long luid) {
+		return new ZoneSequence(nodeId, luid, Lists.newArrayList());
 	}
 	
 	private ZoneSequence(String nodeId, long luid, List<ZoneTravel> travels) {
@@ -55,7 +53,7 @@ public final class ZoneSequence {
 	}
 	
 	public ZoneTravel getLastZoneTravel() {
-		return Iterables.getLast(m_visits);
+		return Iterables.getLast(m_visits, null);
 	}
 	
 	public List<String> getZoneIdSequence() {
@@ -64,6 +62,13 @@ public final class ZoneSequence {
 	
 	public void append(ZoneTravel travel) {
 		m_visits.add(travel);
+	}
+	
+	public ZoneSequence duplicate() {
+		List<ZoneTravel> visits = FStream.from(m_visits)
+										.map(ZoneTravel::duplicate)
+										.toList();
+		return new ZoneSequence(m_nodeId, m_luid, visits);
 	}
 	
 	@Override

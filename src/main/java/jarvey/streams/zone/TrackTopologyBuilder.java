@@ -100,9 +100,13 @@ final class TrackTopologyBuilder {
 		
 		@SuppressWarnings("unchecked")
 		KStream<String,MergedLocationEvent>[] branches
+			// DNA node에서 물체의 위치 이벤트를 수신.
 			= builder.stream(m_topicNodeTracks, Consumed(KEY_SERDE, ObjectTrack.class))
+					// 동일 물체에 대한 연속된 2개의 위치 정보로 부터 물체의 이동 line에 이벤트 생성. 
 					.flatTransformValues(ToLineTransform::new, STORE_LAST_TRACKS)
+					// line 정보와 물체가 검출된 node에 정의된 각 zone과의 위상 정보 이벤트를 생성.
 					.flatMapValues(new ZoneLineRelationDetector(m_jdbc))
+					// 물체 검출/추적 오류로 인해 inconsistent한 물체 추적 이벤트가 발생하는 경우, 이를 보정함.
 					.flatTransformValues(
 							() -> new AdjustZoneLineCrossTransform(STORE_ZONE_LOCATIONS),
 							STORE_ZONE_LOCATIONS)
@@ -128,17 +132,19 @@ final class TrackTopologyBuilder {
 		
 		KStream<String,ResidentChanged> residentChanges
 			= locEvents.flatTransformValues(() -> new ResidentChangedTransform(STORE_ZONE_RESIDENTS),
-											STORE_ZONE_RESIDENTS);
-	//	residentChanges.print(Printed.<String, ResidentChanged>toSysOut().withLabel(m_topicZoneResidents));
+													STORE_ZONE_RESIDENTS);
+//		residentChanges.print(Printed.<String, ResidentChanged>toSysOut().withLabel(m_topicZoneResidents));
 		if ( m_topicZoneResidents != null ) {
-			residentChanges.to(m_topicZoneResidents, Produced.with(KEY_SERDE, GsonUtils.getSerde(ResidentChanged.class)));
+			residentChanges.to(m_topicZoneResidents,
+								Produced.with(KEY_SERDE, GsonUtils.getSerde(ResidentChanged.class)));
 		}
 		
 		if ( m_topicZoneLocations != null ) {
 			KStream<String,LocationChanged> locChangeds
 				= branches[1].mapValues(merged -> merged.getLocationChanged());
 //			locChangeds.print(Printed.<String, LocationChanged>toSysOut().withLabel("loc-changes"));
-			locChangeds.to(m_topicZoneLocations, Produced.with(KEY_SERDE, GsonUtils.getSerde(LocationChanged.class)));
+			locChangeds.to(m_topicZoneLocations,
+							Produced.with(KEY_SERDE, GsonUtils.getSerde(LocationChanged.class)));
 		}
 		
 		return builder.build();

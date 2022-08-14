@@ -1,6 +1,3 @@
-/**
- * 
- */
 package jarvey.streams.serialization.avro;
 
 import java.util.Collections;

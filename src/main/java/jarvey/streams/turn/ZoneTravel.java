@@ -1,6 +1,3 @@
-/**
- * 
- */
 package jarvey.streams.turn;
 
 import com.google.gson.annotations.SerializedName;

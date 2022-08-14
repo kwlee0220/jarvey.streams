@@ -1,6 +1,3 @@
-/**
- * 
- */
 package jarvey.streams.serialization.json;
 
 import java.nio.charset.StandardCharsets;

@@ -1,6 +1,3 @@
-/**
- * 
- */
 package jarvey.streams;
 
 import org.apache.kafka.clients.consumer.ConsumerRecord;

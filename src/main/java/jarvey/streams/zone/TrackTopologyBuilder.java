@@ -89,7 +89,8 @@ final class TrackTopologyBuilder {
 		StreamsBuilder builder = new StreamsBuilder();
 		
 		builder.addStateStore(Stores.keyValueStoreBuilder(
-											Stores.persistentKeyValueStore(STORE_LAST_TRACKS),
+//											Stores.persistentKeyValueStore(STORE_LAST_TRACKS),
+											Stores.inMemoryKeyValueStore(STORE_LAST_TRACKS),
 											GUID.getSerde(), GsonUtils.getSerde(ObjectTrack.class)));
 		builder.addStateStore(Stores.keyValueStoreBuilder(
 											Stores.persistentKeyValueStore(STORE_ZONE_LOCATIONS),

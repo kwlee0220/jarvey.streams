@@ -8,6 +8,7 @@ import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.Topology;
 import org.apache.kafka.streams.kstream.Consumed;
 import org.apache.kafka.streams.kstream.KStream;
+import org.apache.kafka.streams.kstream.Printed;
 import org.apache.kafka.streams.kstream.Produced;
 import org.apache.kafka.streams.state.Stores;
 
@@ -116,6 +117,8 @@ final class TrackTopologyBuilder {
 		
 		KStream<String,ZoneLineRelationEvent> relations
 			= branches[0].flatMapValues(merged -> merged.getZoneLineCrosses());
+		
+//		KStream<String,ZoneLineRelationEvent> relations2 = relations.filter((k,ev) -> ev.getLuid() == 3);
 //		relations.print(Printed.<String, ZoneLineRelationEvent>toSysOut().withLabel("relations"));
 		if ( m_topicZoneLineRelations != null ) {
 			relations.to(m_topicZoneResidents,

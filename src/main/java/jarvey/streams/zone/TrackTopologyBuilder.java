@@ -6,9 +6,9 @@ import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.Topology;
+import org.apache.kafka.streams.Topology.AutoOffsetReset;
 import org.apache.kafka.streams.kstream.Consumed;
 import org.apache.kafka.streams.kstream.KStream;
-import org.apache.kafka.streams.kstream.Printed;
 import org.apache.kafka.streams.kstream.Produced;
 import org.apache.kafka.streams.state.Stores;
 
@@ -80,7 +80,8 @@ final class TrackTopologyBuilder {
 	private static final TrackTimestampExtractor TS_EXTRACTOR = new TrackTimestampExtractor();
 	private static <K,V> Consumed<K,V> Consumed(Serde<K> keySerde, Class<V> valueCls) {
 		return Consumed.with(keySerde, GsonUtils.getSerde(valueCls))
-						.withTimestampExtractor(TS_EXTRACTOR);
+						.withTimestampExtractor(TS_EXTRACTOR)
+						.withOffsetResetPolicy(AutoOffsetReset.LATEST);
 	}
 	
 	public Topology build() {

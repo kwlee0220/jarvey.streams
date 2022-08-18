@@ -87,8 +87,8 @@ public class AdjustZoneLineCrossTransform implements ValueTransformer<ZoneLineRe
 				}
 				else {
 					// 첫번째 line이 zone에서 밖으로 나는 경우 가짜로 Entered 이벤트를 추가한다.
-					s_logger.info("LEFT without the previous ENTERED, insert fake ENTERED: luid={}, zone={}",
-									relEvent.getLuid(), relEvent.getZone());
+					s_logger.info("LEFT without the previous ENTERED, insert fake ENTERED: node={}, luid={}, zone={}",
+								relEvent.getGUID().getNodeId(), relEvent.getLuid(), relEvent.getZone());
 					ZoneLineRelationEvent dummyEntered = create(relEvent, ZoneLineRelation.Entered,
 																	relEvent.getZone());
 					return MergedLocationEvent.from(Arrays.asList(dummyEntered, relEvent));
@@ -109,8 +109,8 @@ public class AdjustZoneLineCrossTransform implements ValueTransformer<ZoneLineRe
 				}
 			case Inside:
 				if ( !zoneIds.contains(relEvent.getZone()) ) {
-					s_logger.info("INSIDE without the previous ENTERED, insert fake ENTERED: luid={}, zone={}",
-									relEvent.getLuid(), relEvent.getZone());
+					s_logger.info("INSIDE without the previous ENTERED, insert fake ENTERED: node={}, luid={}, zone={}",
+									relEvent.getGUID().getNodeId(), relEvent.getLuid(), relEvent.getZone());
 					Set<String> newZoneIds = Funcs.add(zoneIds, relEvent.getZone());
 					ZoneLocations updateLocs = new ZoneLocations(newZoneIds, relEvent.getFrameIndex(),
 																relEvent.getTimestamp());

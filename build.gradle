@@ -59,8 +59,8 @@ ext {
 }
 
 dependencies {
-	compile(project(":utils"))
-	compile(project(":utils.geo"))
+	implementation project(":utils")
+	implementation project(":utils.geo")
 	
 	// Log4j2 & SLF4j bridge
 	implementation "org.apache.logging.log4j:log4j-api:${log4j_version}"

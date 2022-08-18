@@ -18,12 +18,13 @@ import utils.geo.util.GeometryUtils;
 public class PointAdapter extends TypeAdapter<Point> {
 	@Override
 	public Point read(JsonReader in) throws IOException {
-		double[] xy = GsonUtils.readDoubleArray(in);
-		return GeometryUtils.toPoint(xy[0], xy[1]);
+		double[] xy = GsonUtils.readNullableDoubleArray(in);
+		return (xy != null) ? GeometryUtils.toPoint(xy[0], xy[1]) : null;
 	}
 
 	@Override
 	public void write(JsonWriter out, Point pt) throws IOException {
-		GsonUtils.writeDoubleArray(out, pt.getX(), pt.getY());
+		double[] xy = (pt != null) ? new double[] {pt.getX(), pt.getY()} : null;
+		GsonUtils.writeNullableDoubleArray(out, xy);
 	}
 }

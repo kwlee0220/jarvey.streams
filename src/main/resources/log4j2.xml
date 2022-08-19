@@ -3,10 +3,8 @@
 	<Appenders>
 		<Console name="STDOUT" target="SYSTEM_OUT">
 			<PatternLayout pattern="%d{HH:mm:ss,SSS} %-5p [%-21c{2}] %m (%F:%L)%n"/>
-<!--
-			<PatternLayout pattern="%d{HH:mm:ss,SSS} %-5p [%-21c{2}] %m (%F:%L)%n"/>
--->
 		</Console>
+<!--
 		<RollingFile name="File" fileName="./logs/jarvey.streams.log"
 								filePattern="./logs/jarvey.streams-%d{yyyy-MM-dd}-%i.log">
 			<PatternLayout pattern="${LOG_PATTERN}" charset="UTF-8"/>
@@ -16,7 +14,9 @@
 			</Policies>
 			<DefaultRolloverStrategry max="20" fileIndex="min"/>
 		</RollingFile>
+-->
 	</Appenders>
+	
 	<Loggers>
 		<Logger name="org.apache.kafka" level="warn"/>
 		<Root level="info">

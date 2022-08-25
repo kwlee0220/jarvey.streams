@@ -36,13 +36,13 @@ services:
     image: kwlee0220/jarvey.streams.export:0.1.0
     container_name: export
     volumes:
-      - ./data:/var/jarvey
+      - ./data/jarvey:/var/jarvey
     network_mode: host
     environment:
       KAFKA_APPLICATION_ID_CONFIG: "jarvey.streams.export"
-      KAFKA_BOOTSTRAP_SERVERS_CONFIG: "localhost:9091,localhost:9092,localhost:9093"
-
-#      DNA_TARGET_TOPICS: "node-tracks,location-events,zone-locations,zone-residents,turn-events"
+      KAFKA_BOOTSTRAP_SERVERS_CONFIG: "kafka01:9092,kafka02:9092,kafka03:9092"
+      DNA_HDFS_CONF: /var/jarvey/hadoop-conf/jarvey-hdfs.xml
       DNA_TARGET_TOPICS: "node-tracks"
-#      DNA_EXPORT_DIR: "data/logs"
+      DNA_EXPORT_ARCHIVE_DIR: datasets/export
+      DNA_EXPORT_TAIL_DIR: export-tails
       DNA_ROLLING_PERIOD_HOURS: 2

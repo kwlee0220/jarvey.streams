@@ -23,15 +23,15 @@ public class NodeZoneTrackerDockerMain {
 
 		String appId = envs.getOrDefault("KAFKA_APPLICATION_ID_CONFIG", "node-track");
 		String kafkaServers = envs.getOrDefault("KAFKA_BOOTSTRAP_SERVERS_CONFIG", "localhost:9092");
-		String topicNodeTracks = envs.getOrDefault("DNA_TOPIC_TRACKS", "node-tracks");
-		String topicZoneLineRelations = envs.get("DNA_TOPIC_ZONE_LINE_RELATIONS");
-		String topicLocationEvents = envs.getOrDefault("DNA_TOPIC_LOCATION_EVENTS", "location-events");
-		String topicZoneLocations = envs.get("DNA_TOPIC_ZONE_LOCATIONS");
-		String topicZoneResidents = envs.get("DNA_TOPIC_ZONE_RESIDENTS");
+		String topicNodeTracks = envs.getOrDefault("JARVEY_TOPIC_TRACKS", "node-tracks");
+		String topicZoneLineRelations = envs.get("JARVEY_TOPIC_ZONE_LINE_RELATIONS");
+		String topicLocationEvents = envs.getOrDefault("JARVEY_TOPIC_LOCATION_EVENTS", "location-events");
+		String topicZoneLocations = envs.get("JARVEY_TOPIC_ZONE_LOCATIONS");	// zone-locations
+		String topicZoneResidents = envs.get("JARVEY_TOPIC_ZONE_RESIDENTS");	// zone-residents
 		
-		String jdbcUrl = envs.getOrDefault("DNA_ZONE_DB_JDBC_URL", "jdbc:postgresql://localhost:5432/dna");
-		String user = envs.getOrDefault("DNA_ZONE_DB_USER", "dna");
-		String password = envs.getOrDefault("DNA_ZONE_DB_PASSWORD", "urc2004");
+		String jdbcUrl = envs.getOrDefault("JARVEY_JDBC_URL", "jdbc:postgresql://localhost:5432/dna");
+		String user = envs.getOrDefault("JARVEY_JDBC_USER", "dna");
+		String password = envs.getOrDefault("JARVEY_JDBC_PASSWORD", "urc2004");
 		JdbcProcessor jdbc = JdbcProcessor.create(jdbcUrl, user, password);
 		
 		Topology topology = TrackTopologyBuilder.create()
@@ -43,8 +43,8 @@ public class NodeZoneTrackerDockerMain {
 												.setJdbcProcessor(jdbc)
 												.build();
 		
-		String restHost = envs.getOrDefault("DNA_APP_REST_HOST", NetUtils.getLocalHostAddress());
-		int restPort = Integer.parseInt(envs.getOrDefault("DNA_APP_REST_PORT", "15685"));
+		String restHost = envs.getOrDefault("JARVEY_APP_REST_HOST", NetUtils.getLocalHostAddress());
+		int restPort = Integer.parseInt(envs.getOrDefault("JARVEY_APP_REST_PORT", "15685"));
 		String appServerUrl = String.format("%s:%d", restHost, restPort);
 		
 		Properties config = new Properties();

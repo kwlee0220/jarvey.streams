@@ -9,6 +9,8 @@ import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.Topology;
 import org.apache.kafka.streams.state.HostInfo;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import utils.NetUtils;
 import utils.jdbc.JdbcProcessor;
@@ -18,6 +20,8 @@ import utils.jdbc.JdbcProcessor;
  * @author Kang-Woo Lee (ETRI)
  */
 public class NodeZoneTrackerDockerMain {
+	private static final Logger s_logger = LoggerFactory.getLogger(NodeZoneTrackerDockerMain.class);
+	
 	public static void main(String... args) throws Exception {
 		Map<String,String> envs = System.getenv();
 
@@ -33,6 +37,12 @@ public class NodeZoneTrackerDockerMain {
 		String user = envs.getOrDefault("JARVEY_JDBC_USER", "dna");
 		String password = envs.getOrDefault("JARVEY_JDBC_PASSWORD", "urc2004");
 		JdbcProcessor jdbc = JdbcProcessor.create(jdbcUrl, user, password);
+		if ( s_logger.isInfoEnabled() ) {
+			s_logger.info("use JARVEY_JDBC_URL: {}", envs.get("JARVEY_JDBC_URL"));
+			s_logger.info("use JARVEY_JDBC_USER: {}", envs.get("JARVEY_JDBC_USER"));
+			s_logger.info("use JARVEY_JDBC_PASSWORD: {}", envs.get("JARVEY_JDBC_PASSWORD"));
+			s_logger.info("use jdbc info: " + jdbc);
+		}
 		
 		Topology topology = TrackTopologyBuilder.create()
 												.setNodeTracksTopic(topicNodeTracks)

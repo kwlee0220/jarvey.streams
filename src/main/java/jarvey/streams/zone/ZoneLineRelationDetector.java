@@ -34,7 +34,7 @@ public class ZoneLineRelationDetector implements ValueMapper<LineTrack, Iterable
 			m_zoneGroups = loadZoneGroups(m_jdbc);
 		}
 		catch ( Exception e ) {
-			throw new RuntimeException(e);
+			throw new RuntimeException("fails to load zones, jdbc=" + m_jdbc, e);
 		}
 	}
 

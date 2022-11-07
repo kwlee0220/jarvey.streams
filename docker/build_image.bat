@@ -1,0 +1,1 @@
+docker build -t kwlee0220/jarvey.streams.turn:0.1.0 .

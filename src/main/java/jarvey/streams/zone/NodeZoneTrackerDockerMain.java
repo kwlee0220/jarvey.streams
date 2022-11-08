@@ -27,20 +27,27 @@ public class NodeZoneTrackerDockerMain {
 
 		String appId = envs.getOrDefault("KAFKA_APPLICATION_ID_CONFIG", "node-track");
 		String kafkaServers = envs.getOrDefault("KAFKA_BOOTSTRAP_SERVERS_CONFIG", "localhost:9092");
-		String topicNodeTracks = envs.getOrDefault("JARVEY_TOPIC_TRACKS", "node-tracks");
-		String topicZoneLineRelations = envs.get("JARVEY_TOPIC_ZONE_LINE_RELATIONS");
-		String topicLocationEvents = envs.getOrDefault("JARVEY_TOPIC_LOCATION_EVENTS", "location-events");
-		String topicZoneLocations = envs.get("JARVEY_TOPIC_ZONE_LOCATIONS");	// zone-locations
-		String topicZoneResidents = envs.get("JARVEY_TOPIC_ZONE_RESIDENTS");	// zone-residents
 		
-		String jdbcUrl = envs.getOrDefault("JARVEY_JDBC_URL", "jdbc:postgresql://localhost:5432/dna");
-		String user = envs.getOrDefault("JARVEY_JDBC_USER", "dna");
-		String password = envs.getOrDefault("JARVEY_JDBC_PASSWORD", "urc2004");
+		String topicNodeTracks = envs.getOrDefault("DNA_TOPIC_TRACKS", "node-tracks");
+		String topicLocationEvents = envs.getOrDefault("DNA_TOPIC_LOCATION_EVENTS", "location-events");
+		String topicZoneLineRelations = envs.get("DNA_TOPIC_ZONE_LINE_RELATIONS");
+		String topicZoneLocations = envs.get("DNA_TOPIC_ZONE_LOCATIONS");	// zone-locations
+		String topicZoneResidents = envs.get("DNA_TOPIC_ZONE_RESIDENTS");	// zone-residents
+		if ( s_logger.isInfoEnabled() ) {
+			s_logger.info("use Kafka servers: {}", kafkaServers);
+			
+			s_logger.info("use Kafka topic: {}={}", "DNA_TOPIC_TRACKS", topicNodeTracks);
+			s_logger.info("use Kafka topic: {}={}", "DNA_TOPIC_ZONE_LINE_RELATIONS", topicZoneLineRelations);
+			s_logger.info("use Kafka topic: {}={}", "DNA_TOPIC_LOCATION_EVENTS", topicLocationEvents);
+			s_logger.info("use Kafka topic: {}={}", "DNA_TOPIC_ZONE_LOCATIONS", topicZoneLocations);
+			s_logger.info("use Kafka topic: {}={}", "DNA_TOPIC_ZONE_RESIDENTS", topicZoneResidents);
+		}
+		
+		String jdbcUrl = envs.getOrDefault("DNA_JDBC_URL", "jdbc:postgresql://localhost:5432/dna");
+		String user = envs.getOrDefault("DNA_JDBC_USER", "dna");
+		String password = envs.getOrDefault("DNA_JDBC_PASSWORD", "urc2004");
 		JdbcProcessor jdbc = JdbcProcessor.create(jdbcUrl, user, password);
 		if ( s_logger.isInfoEnabled() ) {
-			s_logger.info("use JARVEY_JDBC_URL: {}", envs.get("JARVEY_JDBC_URL"));
-			s_logger.info("use JARVEY_JDBC_USER: {}", envs.get("JARVEY_JDBC_USER"));
-			s_logger.info("use JARVEY_JDBC_PASSWORD: {}", envs.get("JARVEY_JDBC_PASSWORD"));
 			s_logger.info("use jdbc info: " + jdbc);
 		}
 		

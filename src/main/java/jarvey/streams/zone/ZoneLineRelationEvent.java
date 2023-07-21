@@ -8,7 +8,7 @@ import com.google.gson.annotations.SerializedName;
 
 import utils.geo.util.GeoUtils;
 
-import jarvey.streams.model.GUID;
+import jarvey.streams.model.TrackletId;
 import jarvey.streams.model.Timestamped;
 
 /**
@@ -17,18 +17,18 @@ import jarvey.streams.model.Timestamped;
  */
 public final class ZoneLineRelationEvent implements Timestamped {
 	@SerializedName("node") private final String m_nodeId;
-	@SerializedName("luid") private final long m_luid;
+	@SerializedName("track_id") private final String m_trackId;
 	@SerializedName("state") private final ZoneLineRelation m_relation;
 	@Nullable @SerializedName("line") private final LineSegment m_line;
 	@Nullable @SerializedName("zones") private final String m_zone;
 	@SerializedName("frame_index") private final long m_frameIndex;
 	@SerializedName("ts") private final long m_ts;
 	
-	public ZoneLineRelationEvent(String nodeId, long luid, ZoneLineRelation state,
+	public ZoneLineRelationEvent(String nodeId, String trackId, ZoneLineRelation state,
 								@Nullable String zone, @Nullable LineSegment line,
 								long frameIndex, long ts) {
 		m_nodeId = nodeId;
-		m_luid = luid;
+		m_trackId = trackId;
 		m_relation = state;
 		m_zone = zone;
 		m_line = line;
@@ -40,12 +40,12 @@ public final class ZoneLineRelationEvent implements Timestamped {
 		return m_nodeId;
 	}
 	
-	public long getLuid() {
-		return m_luid;
+	public String getTrackId() {
+		return m_trackId;
 	}
 	
-	public GUID getGUID() {
-		return new GUID(m_nodeId, m_luid);
+	public TrackletId getGUID() {
+		return new TrackletId(m_nodeId, m_trackId);
 	}
 	
 	public String getZone() {
@@ -102,11 +102,11 @@ public final class ZoneLineRelationEvent implements Timestamped {
 			String zoneStr = (m_zone != null) ? String.format(", zones=%s", m_zone) : "";
 			String lineStr = (m_line != null) ? String.format(", line=%s", GeoUtils.toString(m_line, 1)) : "";
 			return String.format("%s[node=%s, luid=%d%s%s, frame_idx=%d, ts=%d]",
-								m_relation, m_nodeId, m_luid, zoneStr, lineStr, m_frameIndex, m_ts);
+								m_relation, m_nodeId, m_trackId, zoneStr, lineStr, m_frameIndex, m_ts);
 		}
 		else {
 			return String.format("%s[node=%s, luid=%d, frame_idx=%d, ts=%d]",
-					m_relation, m_nodeId, m_luid, m_frameIndex, m_ts);
+					m_relation, m_nodeId, m_trackId, m_frameIndex, m_ts);
 		}
 	}
 }

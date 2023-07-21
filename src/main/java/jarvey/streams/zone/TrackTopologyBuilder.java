@@ -15,8 +15,8 @@ import org.apache.kafka.streams.state.Stores;
 import utils.jdbc.JdbcProcessor;
 
 import jarvey.streams.TrackTimestampExtractor;
-import jarvey.streams.model.GUID;
-import jarvey.streams.model.ObjectTrack;
+import jarvey.streams.model.TrackletId;
+import jarvey.streams.model.TrackEvent;
 import jarvey.streams.serialization.json.GsonUtils;
 
 /**
@@ -93,10 +93,10 @@ final class TrackTopologyBuilder {
 		builder.addStateStore(Stores.keyValueStoreBuilder(
 //											Stores.persistentKeyValueStore(STORE_LAST_TRACKS),
 											Stores.inMemoryKeyValueStore(STORE_LAST_TRACKS),
-											GUID.getSerde(), GsonUtils.getSerde(ObjectTrack.class)));
+											TrackletId.getSerde(), GsonUtils.getSerde(TrackEvent.class)));
 		builder.addStateStore(Stores.keyValueStoreBuilder(
 											Stores.persistentKeyValueStore(STORE_ZONE_LOCATIONS),
-											GUID.getSerde(), GsonUtils.getSerde(ZoneLocations.class)));
+											TrackletId.getSerde(), GsonUtils.getSerde(ZoneLocations.class)));
 		builder.addStateStore(Stores.keyValueStoreBuilder(
 											Stores.persistentKeyValueStore(STORE_ZONE_RESIDENTS),
 											GlobalZoneId.getSerde(), GsonUtils.getSerde(Residents.class)));
@@ -104,7 +104,7 @@ final class TrackTopologyBuilder {
 		@SuppressWarnings("unchecked")
 		KStream<String,MergedLocationEvent>[] branches
 			// DNA node에서 물체의 위치 이벤트를 수신.
-			= builder.stream(m_topicNodeTracks, Consumed(KEY_SERDE, ObjectTrack.class))
+			= builder.stream(m_topicNodeTracks, Consumed(KEY_SERDE, TrackEvent.class))
 					// 동일 물체에 대한 연속된 2개의 위치 정보로 부터 물체의 이동 line에 이벤트 생성. 
 					.flatTransformValues(ToLineTransform::new, STORE_LAST_TRACKS)
 					// line 정보와 물체가 검출된 node에 정의된 각 zone과의 위상 정보 이벤트를 생성.

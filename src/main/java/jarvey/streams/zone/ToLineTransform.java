@@ -12,27 +12,27 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import jarvey.streams.UpdateTimeAssociatedKeyValue;
-import jarvey.streams.model.GUID;
-import jarvey.streams.model.ObjectTrack;
+import jarvey.streams.model.TrackletId;
+import jarvey.streams.model.TrackEvent;
 
 
 /**
  * 
  * @author Kang-Woo Lee (ETRI)
  */
-public class ToLineTransform implements ValueTransformerWithKey<String, ObjectTrack, Iterable<LineTrack>> {
+public class ToLineTransform implements ValueTransformerWithKey<String, TrackEvent, Iterable<LineTrack>> {
 	private static final Logger s_logger = LoggerFactory.getLogger(ToLineTransform.class);
 
 	private static final Duration DEFAULT_TTL_MINUTES = Duration.ofMinutes(5);
 	private static final int DEFAULT_CHECKUP_MINUTES = 3;
 
-	private UpdateTimeAssociatedKeyValue<GUID, ObjectTrack> m_store;
+	private UpdateTimeAssociatedKeyValue<TrackletId, TrackEvent> m_store;
 	
 	public ToLineTransform() {}
 
 	@Override
 	public void init(ProcessorContext context) {
-		KeyValueStore<GUID, ObjectTrack> store = context.getStateStore("last-tracks");
+		KeyValueStore<TrackletId, TrackEvent> store = context.getStateStore("last-tracks");
 		m_store = UpdateTimeAssociatedKeyValue.of(store);
 		context.schedule(Duration.ofMinutes(DEFAULT_CHECKUP_MINUTES),
 						PunctuationType.WALL_CLOCK_TIME,
@@ -40,19 +40,19 @@ public class ToLineTransform implements ValueTransformerWithKey<String, ObjectTr
 	}
 
 	@Override
-	public Iterable<LineTrack> transform(String key, ObjectTrack track) {
-		GUID guid = track.getGuid();
+	public Iterable<LineTrack> transform(String key, TrackEvent track) {
+		TrackletId guid = track.getTrackletId();
 		if ( track.isDeleted() ) {
 			// 'Delete' event의 경우에는 출력 event를 생성하지 않음.
 			s_logger.debug("delete: guid={}", guid);
 			m_store.delete(guid);
 			
-			LineTrack line = new LineTrack(track.getNodeId(), track.getLuid(), LineTrack.STATE_DELETED,
+			LineTrack line = new LineTrack(track.getNodeId(), track.getTrackId(), LineTrack.STATE_DELETED,
 											null, null, track.getFrameIndex(), track.getTimestamp());
 			return Arrays.asList(line);
 		}
 		else {
-			ObjectTrack lastTrack = m_store.get(guid);
+			TrackEvent lastTrack = m_store.get(guid);
 			m_store.put(guid, track);
 			
 			if ( lastTrack != null ) {

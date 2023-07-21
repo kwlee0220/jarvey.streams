@@ -24,6 +24,11 @@ public class EnvelopeAdater extends TypeAdapter<Envelope> {
 
 	@Override
 	public void write(JsonWriter out, Envelope envl) throws IOException {
-		GsonUtils.writeDoubleArray(out, envl.getMinX(), envl.getMinY(), envl.getMaxX(), envl.getMaxY());
+		if ( envl != null ) {
+			GsonUtils.writeDoubleArray(out, envl.getMinX(), envl.getMinY(), envl.getMaxX(), envl.getMaxY());
+		}
+		else {
+			out.nullValue();
+		}
 	}
 }

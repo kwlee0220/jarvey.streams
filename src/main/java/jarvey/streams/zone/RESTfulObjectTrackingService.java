@@ -13,7 +13,7 @@ import org.slf4j.LoggerFactory;
 
 import utils.stream.FStream;
 
-import jarvey.streams.model.GUID;
+import jarvey.streams.model.TrackletId;
 import jarvey.streams.serialization.json.GsonKeyValue;
 import jarvey.streams.serialization.json.GsonUtils;
 
@@ -143,11 +143,11 @@ public class RESTfulObjectTrackingService {
 	
 	private void getLocationsOfObject(Context ctx) throws IOException {
 		String nodeId = ctx.pathParam("node");
-		long luid = Long.parseLong(ctx.pathParam("luid"));
-		GUID guid = new GUID(nodeId, luid);
+		String trackId = ctx.pathParam("track_id");
+		TrackletId guid = new TrackletId(nodeId, trackId);
 		
 		KeyQueryMetadata meta = m_streams.queryMetadataForKey(STORE_ZONE_LOCATIONS, guid,
-																GUID.getSerde().serializer());
+																TrackletId.getSerde().serializer());
 		ZoneLocations locs = getZoneLocationsStore(meta.activeHost()).getZoneLocationsOfObject(guid);
 		if ( locs != null ) {
 			ctx.result(GsonUtils.toJson(locs));
@@ -160,7 +160,7 @@ public class RESTfulObjectTrackingService {
 	private void getLocationsOfNode(Context ctx) throws IOException {
 		String nodeId = ctx.pathParam("node");
 
-		List<GsonKeyValue<GUID,ZoneLocations>> result = Lists.newArrayList();
+		List<GsonKeyValue<TrackletId,ZoneLocations>> result = Lists.newArrayList();
 		for ( StreamsMetadata meta: m_streams.allMetadataForStore(STORE_ZONE_LOCATIONS) ) {
 			ZoneLocationsStore store = getZoneLocationsStore(meta.hostInfo());
 			FStream.from(store.getZoneLocationsOfNode(nodeId))
@@ -171,7 +171,7 @@ public class RESTfulObjectTrackingService {
 	}
 	
 	private void getLocationsAll(Context ctx) throws IOException {
-		List<GsonKeyValue<GUID,ZoneLocations>> result = Lists.newArrayList();
+		List<GsonKeyValue<TrackletId,ZoneLocations>> result = Lists.newArrayList();
 		for ( StreamsMetadata meta: m_streams.allMetadataForStore(STORE_ZONE_LOCATIONS) ) {
 			ZoneLocationsStore store = getZoneLocationsStore(meta.hostInfo());
 			FStream.from(store.getZoneLocationsAll())
@@ -183,8 +183,8 @@ public class RESTfulObjectTrackingService {
 	
 	private void getLocalLocationsOfObject(Context ctx) throws IOException {
 		String nodeId = ctx.pathParam("node");
-		long luid = Long.parseLong(ctx.pathParam("luid"));
-		GUID guid = new GUID(nodeId, luid);
+		String trackId = ctx.pathParam("track_id");
+		TrackletId guid = new TrackletId(nodeId, trackId);
 		
 		ZoneLocations locs = m_locationStore.getZoneLocationsOfObject(guid);
 		if ( locs != null ) {

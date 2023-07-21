@@ -63,7 +63,7 @@ public class ZoneLineRelationDetector implements ValueMapper<LineTrack, Iterable
 	}
 	
 	private ZoneLineRelationEvent toZoneLineCross(LineTrack track, KeyValue<String,ZoneLineRelation> keyedRel) {
-		return new ZoneLineRelationEvent(track.getNodeId(), track.getLuid(), keyedRel.value(), keyedRel.key(),
+		return new ZoneLineRelationEvent(track.getNodeId(), track.getTrackId(), keyedRel.value(), keyedRel.key(),
 										track.getLine(), track.getFrameIndex(), track.getTimestamp());
 	}
 	
@@ -85,12 +85,12 @@ public class ZoneLineRelationDetector implements ValueMapper<LineTrack, Iterable
 	}
 
 	private static ZoneLineRelationEvent DELETED(LineTrack track) {
-		return new ZoneLineRelationEvent(track.getNodeId(), track.getLuid(), ZoneLineRelation.Deleted,
+		return new ZoneLineRelationEvent(track.getNodeId(), track.getTrackId(), ZoneLineRelation.Deleted,
 									null, null, track.getFrameIndex(), track.getTimestamp());
 	}
 
 	private static ZoneLineRelationEvent UNASSIGNED(LineTrack track) {
-		return new ZoneLineRelationEvent(track.getNodeId(), track.getLuid(), ZoneLineRelation.Unassigned,
+		return new ZoneLineRelationEvent(track.getNodeId(), track.getTrackId(), ZoneLineRelation.Unassigned,
 									null, track.getLine(), track.getFrameIndex(), track.getTimestamp());
 	}
 	

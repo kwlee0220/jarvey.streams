@@ -20,7 +20,7 @@ import utils.func.Funcs;
 import utils.stream.FStream;
 
 import jarvey.streams.UpdateTimeAssociatedKeyValue;
-import jarvey.streams.model.GUID;
+import jarvey.streams.model.TrackletId;
 
 
 /**
@@ -34,7 +34,7 @@ public class AdjustZoneLineCrossTransform implements ValueTransformer<ZoneLineRe
 	private static final int DEFAULT_CHECKUP_MINUTES = 3;
 	
 	private final String m_storeName;
-	private UpdateTimeAssociatedKeyValue<GUID, ZoneLocations> m_zoneLocations;
+	private UpdateTimeAssociatedKeyValue<TrackletId, ZoneLocations> m_zoneLocations;
 	
 	AdjustZoneLineCrossTransform(String storeName) {
 		m_storeName = storeName;
@@ -42,7 +42,7 @@ public class AdjustZoneLineCrossTransform implements ValueTransformer<ZoneLineRe
 
 	@Override
 	public void init(ProcessorContext context) {
-		KeyValueStore<GUID, ZoneLocations> store = context.getStateStore(m_storeName);
+		KeyValueStore<TrackletId, ZoneLocations> store = context.getStateStore(m_storeName);
 		m_zoneLocations = UpdateTimeAssociatedKeyValue.of(store);
 		context.schedule(Duration.ofMinutes(DEFAULT_CHECKUP_MINUTES),
 						PunctuationType.WALL_CLOCK_TIME,
@@ -51,7 +51,7 @@ public class AdjustZoneLineCrossTransform implements ValueTransformer<ZoneLineRe
 
 	@Override
 	public Iterable<MergedLocationEvent> transform(ZoneLineRelationEvent relEvent) {
-		GUID guid = relEvent.getGUID();
+		TrackletId guid = relEvent.getGUID();
 		Set<String> zoneIds = FOption.ofNullable(m_zoneLocations.get(guid))
 									.map(ZoneLocations::getZoneIds)
 									.getOrElse(Sets::newHashSet);
@@ -88,7 +88,7 @@ public class AdjustZoneLineCrossTransform implements ValueTransformer<ZoneLineRe
 				else {
 					// 첫번째 line이 zone에서 밖으로 나는 경우 가짜로 Entered 이벤트를 추가한다.
 					s_logger.info("LEFT without the previous ENTERED, insert fake ENTERED: node={}, luid={}, zone={}",
-								relEvent.getGUID().getNodeId(), relEvent.getLuid(), relEvent.getZone());
+								relEvent.getGUID().getNodeId(), relEvent.getTrackId(), relEvent.getZone());
 					ZoneLineRelationEvent dummyEntered = create(relEvent, ZoneLineRelation.Entered,
 																	relEvent.getZone());
 					return MergedLocationEvent.from(Arrays.asList(dummyEntered, relEvent));
@@ -110,7 +110,7 @@ public class AdjustZoneLineCrossTransform implements ValueTransformer<ZoneLineRe
 			case Inside:
 				if ( !zoneIds.contains(relEvent.getZone()) ) {
 					s_logger.info("INSIDE without the previous ENTERED, insert fake ENTERED: node={}, luid={}, zone={}",
-									relEvent.getGUID().getNodeId(), relEvent.getLuid(), relEvent.getZone());
+									relEvent.getGUID().getNodeId(), relEvent.getTrackId(), relEvent.getZone());
 					Set<String> newZoneIds = Funcs.add(zoneIds, relEvent.getZone());
 					ZoneLocations updateLocs = new ZoneLocations(newZoneIds, relEvent.getFrameIndex(),
 																relEvent.getTimestamp());
@@ -170,11 +170,11 @@ public class AdjustZoneLineCrossTransform implements ValueTransformer<ZoneLineRe
 	public void close() { }
 	
 	private static ZoneLineRelationEvent create(ZoneLineRelationEvent org, ZoneLineRelation rel) {
-		return new ZoneLineRelationEvent(org.getNodeId(), org.getLuid(), rel, org.getZone(), org.getLine(),
+		return new ZoneLineRelationEvent(org.getNodeId(), org.getTrackId(), rel, org.getZone(), org.getLine(),
 								org.getFrameIndex(), org.getTimestamp());
 	}
 	private static ZoneLineRelationEvent create(ZoneLineRelationEvent org, ZoneLineRelation rel, String zone) {
-		return new ZoneLineRelationEvent(org.getNodeId(), org.getLuid(), rel, zone, org.getLine(),
+		return new ZoneLineRelationEvent(org.getNodeId(), org.getTrackId(), rel, zone, org.getLine(),
 								org.getFrameIndex(), org.getTimestamp());
 	}
 }

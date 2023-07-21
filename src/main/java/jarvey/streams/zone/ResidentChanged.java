@@ -12,13 +12,13 @@ import com.google.gson.annotations.SerializedName;
 public final class ResidentChanged {
 	@SerializedName("node") private String m_nodeId;
 	@SerializedName("zone") private String m_zone;
-	@SerializedName("luids") private Set<Long> m_luids;
+	@SerializedName("luids") private Set<String> m_trackIds;
 	@SerializedName("frame_index") private long m_frameIndex;
 	@SerializedName("ts") private long m_ts;
 	
 	public static ResidentChanged from(GlobalZoneId gzone, Residents residents) {
 		if ( residents != null ) {
-			return new ResidentChanged(gzone.getNodeId(), gzone.getZoneId(), residents.getLuids(),
+			return new ResidentChanged(gzone.getNodeId(), gzone.getZoneId(), residents.getTrackIds(),
 										residents.getFrameIndex(), residents.getTimestamp());
 		}
 		else {
@@ -26,10 +26,10 @@ public final class ResidentChanged {
 		}
 	}
 	
-	public ResidentChanged(String nodeId, String zone, Set<Long> luids, long frameIndex, long ts) {
+	public ResidentChanged(String nodeId, String zone, Set<String> trackIds, long frameIndex, long ts) {
 		m_nodeId = nodeId;
 		m_zone = zone;
-		m_luids = luids;
+		m_trackIds = trackIds;
 		m_frameIndex = frameIndex;
 		m_ts = ts;
 	}
@@ -42,8 +42,8 @@ public final class ResidentChanged {
 		return m_zone;
 	}
 	
-	public Set<Long> getResidents() {
-		return m_luids;
+	public Set<String> getResidents() {
+		return m_trackIds;
 	}
 	
 	public long getFrameIndex() {
@@ -57,6 +57,6 @@ public final class ResidentChanged {
 	@Override
 	public String toString() {
 		return String.format("%s[gzone=%s/%s, luids=%s, frame=%d, ts=%d]",
-							getClass().getSimpleName(), m_nodeId, m_zone, m_luids, m_frameIndex, m_ts);
+							getClass().getSimpleName(), m_nodeId, m_zone, m_trackIds, m_frameIndex, m_ts);
 	}
 }

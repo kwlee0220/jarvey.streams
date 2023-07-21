@@ -7,8 +7,8 @@ import com.google.gson.annotations.SerializedName;
 
 import utils.geo.util.GeoUtils;
 
-import jarvey.streams.model.ObjectTrack;
 import jarvey.streams.model.Timestamped;
+import jarvey.streams.model.TrackEvent;
 
 /**
  * 
@@ -20,36 +20,36 @@ public final class LineTrack implements Timestamped {
 	public static final String[] STATES = new String[]{ STATE_TRACKED, STATE_DELETED };
 
 	@SerializedName("node") private String m_nodeId;
-	@SerializedName("luid") private long m_luid;
+	@SerializedName("track_id") private String m_trackId;
 	@SerializedName("state") private String m_state;
 	@SerializedName("line") private LineSegment m_line;
 	@SerializedName("world_line") private LineSegment m_worldLine;
 	@SerializedName("frame_index") private long m_frameIndex;
 	@SerializedName("ts") private long m_ts;
 	
-	public static LineTrack from(ObjectTrack t0, ObjectTrack t1) {
+	public static LineTrack from(TrackEvent t0, TrackEvent t1) {
 		if ( !t1.isDeleted() ) {
 			Point p0 = GeoUtils.getCentroid(t0.getBox());
 			Point p1 = GeoUtils.getCentroid(t1.getBox());
 			
-			return new LineTrack(t1.getNodeId(), t1.getLuid(), STATE_TRACKED,
+			return new LineTrack(t1.getNodeId(), t1.getTrackId(), STATE_TRACKED,
 									GeoUtils.toLineSegment(p0, p1),
 									GeoUtils.toLineSegment(t0.getWorldCoordinates(), t1.getWorldCoordinates()),
 									t1.getFrameIndex(), t1.getTimestamp());
 		}
 		else {
 			Point pt = GeoUtils.getCentroid(t0.getBox());
-			return new LineTrack(t1.getNodeId(), t1.getLuid(), STATE_DELETED,
+			return new LineTrack(t1.getNodeId(), t1.getTrackId(), STATE_DELETED,
 									GeoUtils.toLineSegment(pt, pt),
 									GeoUtils.toLineSegment(t0.getWorldCoordinates(), t0.getWorldCoordinates()),
 									t1.getFrameIndex(), t1.getTimestamp());
 		}
 	}
 	
-	public LineTrack(String nodeId, long luid, String state, LineSegment line, LineSegment worldLine,
+	public LineTrack(String nodeId, String luid, String state, LineSegment line, LineSegment worldLine,
 						long frameIndex, long ts) {
 		m_nodeId = nodeId;
-		m_luid = luid;
+		m_trackId = luid;
 		m_state = state;
 		m_line = line;
 		m_worldLine = worldLine;
@@ -61,8 +61,8 @@ public final class LineTrack implements Timestamped {
 		return m_nodeId;
 	}
 	
-	public long getLuid() {
-		return m_luid;
+	public String getTrackId() {
+		return m_trackId;
 	}
 	
 	public String getState() {
@@ -107,7 +107,7 @@ public final class LineTrack implements Timestamped {
 	public String toString() {
 		String lineStr = GeoUtils.toString(m_line, 1);
 		return String.format("%s[node=%s, luid=%d, line=%s, frame_idx=%d, ts=%d]",
-								m_state, m_nodeId, m_luid, lineStr, m_frameIndex, m_ts);
+								m_state, m_nodeId, m_trackId, lineStr, m_frameIndex, m_ts);
 	}
 	
 	public static String toString(Point pt) {

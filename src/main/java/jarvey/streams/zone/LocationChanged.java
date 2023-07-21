@@ -4,7 +4,7 @@ import java.util.Set;
 
 import com.google.gson.annotations.SerializedName;
 
-import jarvey.streams.model.GUID;
+import jarvey.streams.model.TrackletId;
 
 /**
  * 
@@ -12,19 +12,19 @@ import jarvey.streams.model.GUID;
  */
 public final class LocationChanged {
 	@SerializedName("node") private final String m_nodeId;
-	@SerializedName("luid") private final long m_luid;
+	@SerializedName("luid") private final String m_trackId;
 	@SerializedName("zones") private final Set<String> m_zoneIds;
 	@SerializedName("frame_index") private final long m_frameIndex;
 	@SerializedName("ts") private final long m_ts;
 	
-	public static LocationChanged from(GUID guid, ZoneLocations zones) {
-		return new LocationChanged(guid.getNodeId(), guid.getLuid(), zones.getZoneIds(),
+	public static LocationChanged from(TrackletId guid, ZoneLocations zones) {
+		return new LocationChanged(guid.getNodeId(), guid.getTrackId(), zones.getZoneIds(),
 									zones.getFrameIndex(), zones.getTimestamp());
 	}
 	
-	private LocationChanged(String nodeId, long luid, Set<String> zoneIds, long frameIndex, long ts) {
+	private LocationChanged(String nodeId, String trackId, Set<String> zoneIds, long frameIndex, long ts) {
 		m_nodeId = nodeId;
-		m_luid = luid;
+		m_trackId = trackId;
 		m_zoneIds = zoneIds;
 		m_frameIndex = frameIndex;
 		m_ts = ts;
@@ -34,8 +34,8 @@ public final class LocationChanged {
 		return m_nodeId;
 	}
 	
-	public long getLuid() {
-		return m_luid;
+	public String getTrackId() {
+		return m_trackId;
 	}
 	
 	public Set<String> getZoneIds() {
@@ -53,6 +53,6 @@ public final class LocationChanged {
 	@Override
 	public String toString() {
 		return String.format("%s[node=%s, luid=%d, zones=%s, frame_idx=%d, ts=%d]",
-				getClass().getSimpleName(), m_nodeId, m_luid, m_zoneIds, m_frameIndex, m_ts);
+				getClass().getSimpleName(), m_nodeId, m_trackId, m_zoneIds, m_frameIndex, m_ts);
 	}
 }

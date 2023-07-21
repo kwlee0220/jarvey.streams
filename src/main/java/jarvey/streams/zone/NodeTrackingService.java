@@ -14,15 +14,16 @@ import org.apache.kafka.streams.state.ReadOnlyKeyValueStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import jarvey.streams.model.GUID;
+import utils.jdbc.JdbcProcessor;
+import utils.stream.FStream;
+
+import jarvey.streams.model.TrackletId;
 
 import io.javalin.Javalin;
 import io.javalin.http.Context;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
-import utils.jdbc.JdbcProcessor;
-import utils.stream.FStream;
 
 /**
  * 
@@ -58,11 +59,11 @@ public class NodeTrackingService {
 	
 	void getZonesOfObject(Context ctx) {
 		String nodeId = ctx.pathParam("node");
-		long luid = Long.parseLong(ctx.pathParam("luid"));
-		GUID guid = new GUID(nodeId, luid);
+		String trackId = ctx.pathParam("track_id");
+		TrackletId guid = new TrackletId(nodeId, trackId);
 		
 		KeyQueryMetadata meta = m_streams.queryMetadataForKey(m_zoneLocations, guid,
-																GUID.getSerde().serializer());
+																TrackletId.getSerde().serializer());
 		if ( m_hostInfo.equals(meta.activeHost()) ) {
 			ZoneLocations location = getZoneLocationsStore().get(guid);
 			if ( location != null ) {
@@ -75,7 +76,7 @@ public class NodeTrackingService {
 		}
 
 		try {
-			String path = String.format("%s/%s/%s", m_zoneLocations, guid.getNodeId(), guid.getLuid());
+			String path = String.format("%s/%s/%s", m_zoneLocations, guid.getNodeId(), guid.getTrackId());
 			ctx.result(callRemote(meta.activeHost(), path));
 		}
 		catch ( IOException e1 ) {
@@ -134,7 +135,7 @@ public class NodeTrackingService {
 		if ( m_hostInfo.equals(meta.activeHost()) ) {
 			Residents residents = getResidentsStore().get(gzone);
 			if ( residents != null ) {
-				ctx.json(residents.getLuids());
+				ctx.json(residents.getTrackIds());
 			}
 			else {
 				ctx.status(404);
@@ -234,7 +235,7 @@ public class NodeTrackingService {
 																	QueryableStoreTypes.keyValueStore()));
 	}
 	
-	private ReadOnlyKeyValueStore<GUID,ZoneLocations> getZoneLocationsStore() {
+	private ReadOnlyKeyValueStore<TrackletId,ZoneLocations> getZoneLocationsStore() {
 		return m_streams.store(StoreQueryParameters.fromNameAndType(m_zoneLocations,
 																	QueryableStoreTypes.keyValueStore()));
 	}

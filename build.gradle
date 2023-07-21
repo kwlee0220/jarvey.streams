@@ -24,13 +24,13 @@ buildscript {
 	}
 }
 
-sourceSets {
-	main {
-		java {
-			srcDirs 'build/generated-main-avro-java'
-		}
-	}
-}
+// sourceSets {
+//	main {
+//		java {
+//			srcDirs 'build/generated-main-avro-java'
+//		}
+//	}
+//}
 
 repositories {
 	mavenLocal()

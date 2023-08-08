@@ -16,7 +16,7 @@ import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
 
-import jarvey.streams.model.TrackEvent;
+import jarvey.streams.model.NodeTrack;
 import jarvey.streams.zone.ZoneLineRelation;
 
 /**
@@ -35,7 +35,7 @@ public class GsonUtils {
 		builder.registerTypeAdapter(Envelope.class, new EnvelopeAdater());
 		builder.registerTypeAdapter(LineSegment.class, new LineSegmentAdapter());
 		builder.registerTypeAdapter(ZoneLineRelation.class, new ZoneLineRelationAdapter());
-		builder.registerTypeAdapter(TrackEvent.State.class, new TrackEventStateAdapter());
+		builder.registerTypeAdapter(NodeTrack.State.class, new NodeTrackStateAdapter());
 		s_gson = builder.create();
 	}
 	
@@ -45,6 +45,10 @@ public class GsonUtils {
 	
 	public static <T> GsonSerde<T> getSerde(Class<T> cls) {
 		return new GsonSerde<>(cls, s_gson);
+	}
+	
+	public static <T> GsonListSerde<T> getListSerde(Class<T> cls) {
+		return new GsonListSerde<>(cls, s_gson);
 	}
 	
 	public static <T> T parseJson(String gsonStr, Class<T> cls) {

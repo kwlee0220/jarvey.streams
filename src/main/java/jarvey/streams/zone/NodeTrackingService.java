@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.function.BiConsumer;
 
+import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.KeyQueryMetadata;
 import org.apache.kafka.streams.StoreQueryParameters;
@@ -14,16 +15,15 @@ import org.apache.kafka.streams.state.ReadOnlyKeyValueStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import utils.jdbc.JdbcProcessor;
-import utils.stream.FStream;
-
-import jarvey.streams.model.TrackletId;
-
 import io.javalin.Javalin;
 import io.javalin.http.Context;
+import jarvey.streams.model.TrackletId;
+import jarvey.streams.serialization.json.GsonUtils;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
+import utils.jdbc.JdbcProcessor;
+import utils.stream.FStream;
 
 /**
  * 
@@ -63,9 +63,9 @@ public class NodeTrackingService {
 		TrackletId guid = new TrackletId(nodeId, trackId);
 		
 		KeyQueryMetadata meta = m_streams.queryMetadataForKey(m_zoneLocations, guid,
-																TrackletId.getSerde().serializer());
+															GsonUtils.getSerde(TrackletId.class).serializer());
 		if ( m_hostInfo.equals(meta.activeHost()) ) {
-			ZoneLocations location = getZoneLocationsStore().get(guid);
+			TrackZoneLocations location = getZoneLocationsStore().get(guid);
 			if ( location != null ) {
 				ctx.json(location.getZoneIds());
 			}
@@ -126,14 +126,12 @@ public class NodeTrackingService {
 //	}
 	
 	void getResidentsInZone(Context ctx) {
-		String nodeId = ctx.pathParam("node");
 		String zoneId = ctx.pathParam("zone");
-		GlobalZoneId gzone = new GlobalZoneId(nodeId, zoneId);
 		
-		KeyQueryMetadata meta = m_streams.queryMetadataForKey(m_zoneResidents, gzone,
-															GlobalZoneId.getSerde().serializer());
+		KeyQueryMetadata meta = m_streams.queryMetadataForKey(m_zoneResidents, zoneId,
+															Serdes.String().serializer());
 		if ( m_hostInfo.equals(meta.activeHost()) ) {
-			Residents residents = getResidentsStore().get(gzone);
+			Residents residents = getResidentsStore().get(zoneId);
 			if ( residents != null ) {
 				ctx.json(residents.getTrackIds());
 			}
@@ -144,7 +142,7 @@ public class NodeTrackingService {
 		}
 
 		try {
-			String path = String.format("%s/%s/%s", m_zoneLocations, gzone.getNodeId(), gzone.getZoneId());
+			String path = String.format("%s/%s", m_zoneLocations, zoneId);
 			ctx.result(callRemote(meta.activeHost(), path));
 		}
 		catch ( IOException e1 ) {
@@ -152,8 +150,8 @@ public class NodeTrackingService {
 		}
 	}
 	
-	Map<GlobalZoneId, Residents> getResidentsLocal() {
-		try ( KeyValueIterator<GlobalZoneId,Residents> it = getResidentsStore().all() ) {
+	Map<String, Residents> getResidentsLocal() {
+		try ( KeyValueIterator<String,Residents> it = getResidentsStore().all() ) {
 			return FStream.from(it)
 							.toMap(kv -> kv.key, kv -> kv.value);
 		}
@@ -230,12 +228,12 @@ public class NodeTrackingService {
 		}
 	}
 	
-	private ReadOnlyKeyValueStore<GlobalZoneId,Residents> getResidentsStore() {
+	private ReadOnlyKeyValueStore<String,Residents> getResidentsStore() {
 		return m_streams.store(StoreQueryParameters.fromNameAndType(m_zoneResidents,
 																	QueryableStoreTypes.keyValueStore()));
 	}
 	
-	private ReadOnlyKeyValueStore<TrackletId,ZoneLocations> getZoneLocationsStore() {
+	private ReadOnlyKeyValueStore<TrackletId,TrackZoneLocations> getZoneLocationsStore() {
 		return m_streams.store(StoreQueryParameters.fromNameAndType(m_zoneLocations,
 																	QueryableStoreTypes.keyValueStore()));
 	}

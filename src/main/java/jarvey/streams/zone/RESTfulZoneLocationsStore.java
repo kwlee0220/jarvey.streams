@@ -7,15 +7,12 @@ import org.apache.kafka.streams.state.HostInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import utils.func.KeyValue;
-import utils.stream.FStream;
-
-import jarvey.streams.model.TrackletId;
 import jarvey.streams.serialization.json.GsonUtils;
-
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
+import utils.func.KeyValue;
+import utils.stream.FStream;
 
 /**
  * 
@@ -33,28 +30,18 @@ public class RESTfulZoneLocationsStore implements ZoneLocationsStore {
 	}
 	
 	@Override
-	public ZoneLocations getZoneLocationsOfObject(TrackletId guid) {
-		String path = String.format("local/%s/%s/%s", m_storeName, guid.getNodeId(), guid.getTrackId());
+	public TrackZoneLocations getZoneLocations(String trackId) {
+		String path = String.format("local/%s/%s", m_storeName, trackId);
 		String respJson = callRemote(m_hostInfo, path);
-		return (respJson != null) ? GsonUtils.parseJson(respJson, ZoneLocations.class) : null;
+		return (respJson != null) ? GsonUtils.parseJson(respJson, TrackZoneLocations.class) : null;
 	}
 
 	@Override
-	public List<KeyValue<TrackletId,ZoneLocations>> getZoneLocationsOfNode(String nodeId) {
-		String path = String.format("local/%s/%s", m_storeName, nodeId);
-		String respJson = callRemote(m_hostInfo, path);
-		
-		return FStream.from(GsonUtils.parseKVList(respJson, TrackletId.class, ZoneLocations.class))
-						.map(kv -> KeyValue.of(kv.getKey(), kv.getValue()))
-						.toList();
-	}
-
-	@Override
-	public List<KeyValue<TrackletId,ZoneLocations>> getZoneLocationsAll() {
+	public List<KeyValue<String,TrackZoneLocations>> getZoneLocationsAll() {
 		String path = String.format("local/%s", m_storeName);
 		String respJson = callRemote(m_hostInfo, path);
 		
-		return FStream.from(GsonUtils.parseKVList(respJson, TrackletId.class, ZoneLocations.class))
+		return FStream.from(GsonUtils.parseKVList(respJson, String.class, TrackZoneLocations.class))
 						.map(kv -> KeyValue.of(kv.getKey(), kv.getValue()))
 						.toList();
 	}

@@ -22,16 +22,16 @@ import utils.stream.KVFStream;
  * 
  * @author Kang-Woo Lee (ETRI)
  */
-public class UpdateTimeAssociatedKeyValue<K,V> implements KeyValueStore<K,V> {
+public class UpdateTimeAssociatedKeyValueStore<K,V> implements KeyValueStore<K,V> {
 	private final KeyValueStore<K,V> m_store;
 	private final LastUpdated<K> m_lastUpdateds = new LastUpdated<>();
 	private Logger m_logger = LoggerFactory.getLogger(getClass());
 	
-	public static <K,V> UpdateTimeAssociatedKeyValue<K,V> of(KeyValueStore<K,V> store) {
-		return new UpdateTimeAssociatedKeyValue<>(store);
+	public static <K,V> UpdateTimeAssociatedKeyValueStore<K,V> of(KeyValueStore<K,V> store) {
+		return new UpdateTimeAssociatedKeyValueStore<>(store);
 	}
 	
-	private UpdateTimeAssociatedKeyValue(KeyValueStore<K,V> store) {
+	private UpdateTimeAssociatedKeyValueStore(KeyValueStore<K,V> store) {
 		m_store = store;
 	}
 	

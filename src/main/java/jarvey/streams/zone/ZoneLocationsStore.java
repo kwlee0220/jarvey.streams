@@ -4,8 +4,6 @@ import java.util.List;
 
 import utils.func.KeyValue;
 
-import jarvey.streams.model.TrackletId;
-
 
 /**
  * 
@@ -15,23 +13,15 @@ public interface ZoneLocationsStore {
 	/**
 	 * 주어진 전역 물체 식별자의 zone 위치 리스트를 반환한다.
 	 *
-	 * @param guid	전역 물체 식별자.
+	 * @param trackId	전역 물체 식별자.
 	 * @return	대상 물체가 위치한 zone 식별자 리스트.
 	 */
-	public ZoneLocations getZoneLocationsOfObject(TrackletId guid);
-	
-	/**
-	 * 주어진 노드에 소속된 모든 물체들의 zone 위치 리스트를 반환한다.
-	 *
-	 * @param nodeId	노드 식별자.
-	 * @return	노드에 소속된 모든 물체들의 zone 위치 리스트.
-	 */
-	public List<KeyValue<TrackletId,ZoneLocations>> getZoneLocationsOfNode(String nodeId);
+	public TrackZoneLocations getZoneLocations(String trackId);
 	
 	/**
 	 * 시스템의 모든 물체들의 zone 위치 리스트를 반환한다.
 	 *
 	 * @return	모든 물체들의 zone 위치 리스트.
 	 */
-	public List<KeyValue<TrackletId,ZoneLocations>> getZoneLocationsAll();
+	public List<KeyValue<String,TrackZoneLocations>> getZoneLocationsAll();
 }

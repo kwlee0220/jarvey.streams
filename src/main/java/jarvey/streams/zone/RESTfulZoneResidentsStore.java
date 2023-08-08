@@ -7,14 +7,12 @@ import org.apache.kafka.streams.state.HostInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import utils.func.KeyValue;
-import utils.stream.FStream;
-
 import jarvey.streams.serialization.json.GsonUtils;
-
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
+import utils.func.KeyValue;
+import utils.stream.FStream;
 
 /**
  * 
@@ -32,28 +30,18 @@ public class RESTfulZoneResidentsStore implements ZoneResidentsStore {
 	}
 
 	@Override
-	public Residents getResidentsOfZone(GlobalZoneId gzone) {
-		String path = String.format("local/%s/%s/%s", m_storeName, gzone.getNodeId(), gzone.getZoneId());
+	public Residents getResidentsOfZone(String zoneId) {
+		String path = String.format("local/%s/%s", m_storeName, zoneId);
 		String respJson = callRemote(m_hostInfo, path);
 		return (respJson != null) ? GsonUtils.parseJson(respJson, Residents.class) : null;
 	}
 
 	@Override
-	public List<KeyValue<GlobalZoneId,Residents>> getResidentsOfNode(String nodeId) {
-		String path = String.format("local/%s/%s", m_storeName, nodeId);
-		String respJson = callRemote(m_hostInfo, path);
-		
-		return FStream.from(GsonUtils.parseKVList(respJson, GlobalZoneId.class, Residents.class))
-						.map(kv -> KeyValue.of(kv.getKey(), kv.getValue()))
-						.toList();
-	}
-
-	@Override
-	public List<KeyValue<GlobalZoneId,Residents>> getResidentsAll() {
+	public List<KeyValue<String,Residents>> getResidentsAll() {
 		String path = String.format("local/%s", m_storeName);
 		String respJson = callRemote(m_hostInfo, path);
 		
-		return FStream.from(GsonUtils.parseKVList(respJson, GlobalZoneId.class, Residents.class))
+		return FStream.from(GsonUtils.parseKVList(respJson, String.class, Residents.class))
 						.map(kv -> KeyValue.of(kv.getKey(), kv.getValue()))
 						.toList();
 	}

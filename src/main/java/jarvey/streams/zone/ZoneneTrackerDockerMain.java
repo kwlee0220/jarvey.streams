@@ -13,51 +13,35 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import utils.NetUtils;
-import utils.jdbc.JdbcProcessor;
 
 /**
  * 
  * @author Kang-Woo Lee (ETRI)
  */
-public class NodeZoneTrackerDockerMain {
-	private static final Logger s_logger = LoggerFactory.getLogger(NodeZoneTrackerDockerMain.class);
+public class ZoneneTrackerDockerMain {
+	private static final Logger s_logger = LoggerFactory.getLogger(ZoneneTrackerDockerMain.class);
 	
 	public static void main(String... args) throws Exception {
 		Map<String,String> envs = System.getenv();
 
-		String appId = envs.getOrDefault("KAFKA_APPLICATION_ID_CONFIG", "node-track");
+		String appId = envs.getOrDefault("KAFKA_APPLICATION_ID_CONFIG", "zone-track");
 		String kafkaServers = envs.getOrDefault("KAFKA_BOOTSTRAP_SERVERS_CONFIG", "localhost:9092");
 		
 		String topicNodeTracks = envs.getOrDefault("DNA_TOPIC_TRACKS", "node-tracks");
-		String topicLocationEvents = envs.getOrDefault("DNA_TOPIC_LOCATION_EVENTS", "location-events");
-		String topicZoneLineRelations = envs.get("DNA_TOPIC_ZONE_LINE_RELATIONS");
-		String topicZoneLocations = envs.get("DNA_TOPIC_ZONE_LOCATIONS");	// zone-locations
+		String topicZoneTracks = envs.getOrDefault("DNA_TOPIC_ZONE_TRACKS", "zone-tracks");
 		String topicZoneResidents = envs.get("DNA_TOPIC_ZONE_RESIDENTS");	// zone-residents
 		if ( s_logger.isInfoEnabled() ) {
 			s_logger.info("use Kafka servers: {}", kafkaServers);
 			
 			s_logger.info("use Kafka topic: {}={}", "DNA_TOPIC_TRACKS", topicNodeTracks);
-			s_logger.info("use Kafka topic: {}={}", "DNA_TOPIC_ZONE_LINE_RELATIONS", topicZoneLineRelations);
-			s_logger.info("use Kafka topic: {}={}", "DNA_TOPIC_LOCATION_EVENTS", topicLocationEvents);
-			s_logger.info("use Kafka topic: {}={}", "DNA_TOPIC_ZONE_LOCATIONS", topicZoneLocations);
+			s_logger.info("use Kafka topic: {}={}", "DNA_TOPIC_ZONE_TRACKS", topicZoneTracks);
 			s_logger.info("use Kafka topic: {}={}", "DNA_TOPIC_ZONE_RESIDENTS", topicZoneResidents);
 		}
 		
-		String jdbcUrl = envs.getOrDefault("DNA_JDBC_URL", "jdbc:postgresql://localhost:5432/dna");
-		String user = envs.getOrDefault("DNA_JDBC_USER", "dna");
-		String password = envs.getOrDefault("DNA_JDBC_PASSWORD", "urc2004");
-		JdbcProcessor jdbc = JdbcProcessor.create(jdbcUrl, user, password);
-		if ( s_logger.isInfoEnabled() ) {
-			s_logger.info("use jdbc info: " + jdbc);
-		}
-		
-		Topology topology = TrackTopologyBuilder.create()
+		Topology topology = ZoneTrackTopologyBuilder.create()
 												.setNodeTracksTopic(topicNodeTracks)
-												.setZoneLineRelationsTopic(topicZoneLineRelations)
-												.setLocationEventsTopic(topicLocationEvents)
-												.setZoneLocationsTopic(topicZoneLocations)
+												.setZoneTracksTopic(topicZoneTracks)
 												.setZoneResidentsTopic(topicZoneResidents)
-												.setJdbcProcessor(jdbc)
 												.build();
 		
 		String restHost = envs.getOrDefault("JARVEY_APP_REST_HOST", NetUtils.getLocalHostAddress());

@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.List;
 
 import org.apache.commons.compress.utils.Lists;
+import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.KeyQueryMetadata;
 import org.apache.kafka.streams.state.HostInfo;
@@ -11,14 +12,11 @@ import org.apache.kafka.streams.state.StreamsMetadata;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import utils.stream.FStream;
-
-import jarvey.streams.model.TrackletId;
-import jarvey.streams.serialization.json.GsonKeyValue;
-import jarvey.streams.serialization.json.GsonUtils;
-
 import io.javalin.Javalin;
 import io.javalin.http.Context;
+import jarvey.streams.serialization.json.GsonKeyValue;
+import jarvey.streams.serialization.json.GsonUtils;
+import utils.stream.FStream;
 
 /**
  * 
@@ -46,29 +44,23 @@ public class RESTfulObjectTrackingService {
 		
 		s_logger.info("starting RESTful service for store={}", STORE_ZONE_LOCATIONS);
 		app.get("/zone-locations", this::getLocationsAll);
-		app.get("/zone-locations/{node}", this::getLocationsOfNode);
-		app.get("/zone-locations/{node}/{luid}", this::getLocationsOfObject);
+		app.get("/zone-locations/{track}", this::getLocationsOfObject);
 		app.get("/local/zone-locations", this::getLocalLocationsAll);
-		app.get("/local/zone-locations/{node}", this::getLocalLocationsOfNode);
 		app.get("/local/zone-locations/{node}/{luid}", this::getLocalLocationsOfObject);
 		
 		s_logger.info("starting RESTful service for store={}", STORE_ZONE_RESIDENTS);
 		app.get("/zone-residents", this::getResidentsAll);
-		app.get("/zone-residents/{node}", this::getResidentsOfNode);
-		app.get("/zone-residents/{node}/{zone}", this::getResidentsOfZone);
+		app.get("/zone-residents/{zone}", this::getResidentsOfZone);
 		app.get("/local/zone-residents", this::getLocalResidentsAll);
-		app.get("/local/zone-residents/{node}", this::getLocalResidentsOfNode);
 		app.get("/local/zone-residents/{node}/{luid}", this::getLocalResidentsOfZone);
 	}
 	
 	private void getResidentsOfZone(Context ctx) throws IOException {
-		String nodeId = ctx.pathParam("node");
 		String zoneId = ctx.pathParam("zone");
-		GlobalZoneId gzone = new GlobalZoneId(nodeId, zoneId);
 		
-		KeyQueryMetadata meta = m_streams.queryMetadataForKey(STORE_ZONE_RESIDENTS, gzone,
-																GlobalZoneId.getSerde().serializer());
-		Residents residents = getZoneResidentsStore(meta.activeHost()).getResidentsOfZone(gzone);
+		KeyQueryMetadata meta = m_streams.queryMetadataForKey(STORE_ZONE_RESIDENTS, zoneId,
+																Serdes.String().serializer());
+		Residents residents = getZoneResidentsStore(meta.activeHost()).getResidentsOfZone(zoneId);
 		if ( residents != null ) {
 			ctx.json(GsonUtils.toJson(residents));
 		}
@@ -77,21 +69,8 @@ public class RESTfulObjectTrackingService {
 		}
 	}
 	
-	private void getResidentsOfNode(Context ctx) throws IOException {
-		String nodeId = ctx.pathParam("node");
-
-		List<GsonKeyValue<GlobalZoneId,Residents>> result = Lists.newArrayList();
-		for ( StreamsMetadata meta: m_streams.allMetadataForStore(STORE_ZONE_RESIDENTS) ) {
-			ZoneResidentsStore store = getZoneResidentsStore(meta.hostInfo());
-			FStream.from(store.getResidentsOfNode(nodeId))
-					.map(kv -> GsonKeyValue.of(kv.key(), kv.value()))
-					.toCollection(result);
-		}
-		ctx.result(GsonUtils.toJson(result));
-	}
-	
 	private void getResidentsAll(Context ctx) throws IOException {
-		List<GsonKeyValue<GlobalZoneId,Residents>> result = Lists.newArrayList();
+		List<GsonKeyValue<String,Residents>> result = Lists.newArrayList();
 		for ( StreamsMetadata meta: m_streams.allMetadataForStore(STORE_ZONE_RESIDENTS) ) {
 			ZoneResidentsStore store = getZoneResidentsStore(meta.hostInfo());
 			FStream.from(store.getResidentsAll())
@@ -102,11 +81,9 @@ public class RESTfulObjectTrackingService {
 	}
 	
 	private void getLocalResidentsOfZone(Context ctx) throws IOException {
-		String nodeId = ctx.pathParam("node");
 		String zoneId = ctx.pathParam("zone");
-		GlobalZoneId gzone = new GlobalZoneId(nodeId, zoneId);
 		
-		Residents residents = m_residentsStore.getResidentsOfZone(gzone);
+		Residents residents = m_residentsStore.getResidentsOfZone(zoneId);
 		if ( residents != null ) {
 			ctx.result(GsonUtils.toJson(residents));
 		}
@@ -115,18 +92,8 @@ public class RESTfulObjectTrackingService {
 		}
 	}
 	
-	private void getLocalResidentsOfNode(Context ctx) throws IOException {
-		String nodeId = ctx.pathParam("node");
-
-		List<GsonKeyValue<GlobalZoneId,Residents>> result = Lists.newArrayList();
-		FStream.from(m_residentsStore.getResidentsOfNode(nodeId))
-				.map(kv -> GsonKeyValue.of(kv.key(), kv.value()))
-				.toCollection(result);
-		ctx.result(GsonUtils.toJson(result));
-	}
-	
 	private void getLocalResidentsAll(Context ctx) throws IOException {
-		List<GsonKeyValue<GlobalZoneId,Residents>> result = Lists.newArrayList();
+		List<GsonKeyValue<String,Residents>> result = Lists.newArrayList();
 		FStream.from(m_residentsStore.getResidentsAll())
 				.map(kv -> GsonKeyValue.of(kv.key(), kv.value()))
 				.toCollection(result);
@@ -142,13 +109,11 @@ public class RESTfulObjectTrackingService {
 
 	
 	private void getLocationsOfObject(Context ctx) throws IOException {
-		String nodeId = ctx.pathParam("node");
 		String trackId = ctx.pathParam("track_id");
-		TrackletId guid = new TrackletId(nodeId, trackId);
 		
-		KeyQueryMetadata meta = m_streams.queryMetadataForKey(STORE_ZONE_LOCATIONS, guid,
-																TrackletId.getSerde().serializer());
-		ZoneLocations locs = getZoneLocationsStore(meta.activeHost()).getZoneLocationsOfObject(guid);
+		KeyQueryMetadata meta = m_streams.queryMetadataForKey(STORE_ZONE_LOCATIONS, trackId,
+																Serdes.String().serializer());
+		TrackZoneLocations locs = getZoneLocationsStore(meta.activeHost()).getZoneLocations(trackId);
 		if ( locs != null ) {
 			ctx.result(GsonUtils.toJson(locs));
 		}
@@ -157,21 +122,8 @@ public class RESTfulObjectTrackingService {
 		}
 	}
 	
-	private void getLocationsOfNode(Context ctx) throws IOException {
-		String nodeId = ctx.pathParam("node");
-
-		List<GsonKeyValue<TrackletId,ZoneLocations>> result = Lists.newArrayList();
-		for ( StreamsMetadata meta: m_streams.allMetadataForStore(STORE_ZONE_LOCATIONS) ) {
-			ZoneLocationsStore store = getZoneLocationsStore(meta.hostInfo());
-			FStream.from(store.getZoneLocationsOfNode(nodeId))
-					.map(kv -> GsonKeyValue.of(kv.key(), kv.value()))
-					.toCollection(result);
-		}
-		ctx.json(GsonUtils.toJson(result));
-	}
-	
 	private void getLocationsAll(Context ctx) throws IOException {
-		List<GsonKeyValue<TrackletId,ZoneLocations>> result = Lists.newArrayList();
+		List<GsonKeyValue<String,TrackZoneLocations>> result = Lists.newArrayList();
 		for ( StreamsMetadata meta: m_streams.allMetadataForStore(STORE_ZONE_LOCATIONS) ) {
 			ZoneLocationsStore store = getZoneLocationsStore(meta.hostInfo());
 			FStream.from(store.getZoneLocationsAll())
@@ -182,26 +134,15 @@ public class RESTfulObjectTrackingService {
 	}
 	
 	private void getLocalLocationsOfObject(Context ctx) throws IOException {
-		String nodeId = ctx.pathParam("node");
 		String trackId = ctx.pathParam("track_id");
-		TrackletId guid = new TrackletId(nodeId, trackId);
 		
-		ZoneLocations locs = m_locationStore.getZoneLocationsOfObject(guid);
+		TrackZoneLocations locs = m_locationStore.getZoneLocations(trackId);
 		if ( locs != null ) {
 			ctx.json(GsonUtils.toJson(locs));
 		}
 		else {
 			ctx.status(404);
 		}
-	}
-	
-	private void getLocalLocationsOfNode(Context ctx) {
-		String nodeId = ctx.pathParam("node");
-		
-		String json = GsonUtils.toJson(FStream.from(m_locationStore.getZoneLocationsOfNode(nodeId))
-												.map(kv -> GsonKeyValue.of(kv.key(), kv.value()))
-												.toList());
-		ctx.result(json);
 	}
 	
 	private void getLocalLocationsAll(Context ctx) {

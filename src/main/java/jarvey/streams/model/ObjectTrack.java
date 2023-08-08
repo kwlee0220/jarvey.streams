@@ -9,4 +9,5 @@ import org.locationtech.jts.geom.Point;
 public interface ObjectTrack extends Timestamped {
 	public String getId();
 	public Point getLocation();
+	public boolean isDeleted();
 }

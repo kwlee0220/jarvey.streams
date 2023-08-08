@@ -1,11 +1,14 @@
 package jarvey.streams.model;
 
+import org.apache.kafka.common.serialization.Serde;
 import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.Point;
 
 import com.google.common.base.Objects;
 import com.google.gson.annotations.SerializedName;
 
+import jarvey.streams.serialization.json.GsonSerde;
+import jarvey.streams.serialization.json.GsonUtils;
 import utils.geo.util.GeoUtils;
 import utils.stream.FStream;
 
@@ -13,7 +16,7 @@ import utils.stream.FStream;
  * 
  * @author Kang-Woo Lee (ETRI)
  */
-public final class TrackEvent implements ObjectTrack, Comparable<TrackEvent> {
+public final class NodeTrack implements ObjectTrack, Comparable<NodeTrack> {
 	public static enum State {
 		Tentative("T"),
 		Confirmed("C"),
@@ -46,6 +49,11 @@ public final class TrackEvent implements ObjectTrack, Comparable<TrackEvent> {
 	@SerializedName("world_coord") private Point m_worldCoords;
 	@SerializedName("distance") private double m_distance;
 	@SerializedName("zone_relation") private String m_zoneRelation;
+	
+	private final static GsonSerde<NodeTrack> SERDE = GsonUtils.getSerde(NodeTrack.class);
+	public static final Serde<NodeTrack> getGsonSerde() {
+		return SERDE;
+	}
 	
 	public String getNodeId() {
 		return m_nodeId;
@@ -105,12 +113,12 @@ public final class TrackEvent implements ObjectTrack, Comparable<TrackEvent> {
 		return m_zoneRelation;
 	}
 	
-	public boolean isSameTrack(TrackEvent other) {
+	public boolean isSameTrack(NodeTrack other) {
 		return Objects.equal(m_nodeId, other.m_nodeId) && Objects.equal(m_trackId, other.getTrackId());
 	}
 	
 	@Override
-	public int compareTo(TrackEvent o) {
+	public int compareTo(NodeTrack o) {
 		int cmp = Long.compare(m_ts, o.m_ts);
 		if ( cmp != 0 ) {
 			return cmp;
@@ -157,8 +165,8 @@ public final class TrackEvent implements ObjectTrack, Comparable<TrackEvent> {
 			m_ts = ts;
 		}
 		
-		public TrackEvent build() {
-			TrackEvent track = new TrackEvent();
+		public NodeTrack build() {
+			NodeTrack track = new NodeTrack();
 			track.m_nodeId = m_nodeId;
 			track.m_trackId = m_trackId;
 			track.m_state = m_state;

@@ -1,14 +1,11 @@
 package jarvey.streams.model;
 
-import org.apache.kafka.common.serialization.Serde;
 import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.Point;
 
 import com.google.common.base.Objects;
 import com.google.gson.annotations.SerializedName;
 
-import jarvey.streams.serialization.json.GsonSerde;
-import jarvey.streams.serialization.json.GsonUtils;
 import utils.geo.util.GeoUtils;
 import utils.stream.FStream;
 
@@ -16,7 +13,7 @@ import utils.stream.FStream;
  * 
  * @author Kang-Woo Lee (ETRI)
  */
-public final class NodeTrack implements ObjectTrack, Comparable<NodeTrack> {
+public final class NodeTrack implements Timestamped, ObjectTrack, Comparable<NodeTrack> {
 	public static enum State {
 		Tentative("T"),
 		Confirmed("C"),
@@ -50,9 +47,16 @@ public final class NodeTrack implements ObjectTrack, Comparable<NodeTrack> {
 	@SerializedName("distance") private double m_distance;
 	@SerializedName("zone_relation") private String m_zoneRelation;
 	
-	private final static GsonSerde<NodeTrack> SERDE = GsonUtils.getSerde(NodeTrack.class);
-	public static final Serde<NodeTrack> getGsonSerde() {
-		return SERDE;
+	private NodeTrack(NodeTrack.Builder builder) {
+		m_nodeId = builder.m_nodeId;
+		m_trackId = builder.m_trackId;
+		m_state = builder.m_state;
+		m_box = builder.m_box;
+		m_frameIndex = builder.m_frameIndex;
+		m_ts = builder.m_ts;
+		m_worldCoords = builder.m_worldCoords;
+		m_distance = builder.m_distance;
+		m_zoneRelation = builder.m_zoneRelation;
 	}
 	
 	public String getNodeId() {
@@ -166,17 +170,7 @@ public final class NodeTrack implements ObjectTrack, Comparable<NodeTrack> {
 		}
 		
 		public NodeTrack build() {
-			NodeTrack track = new NodeTrack();
-			track.m_nodeId = m_nodeId;
-			track.m_trackId = m_trackId;
-			track.m_state = m_state;
-			track.m_box = m_box;
-			track.m_frameIndex = m_frameIndex;
-			track.m_ts = m_ts;
-			track.m_worldCoords = m_worldCoords;
-			track.m_zoneRelation = m_zoneRelation;
-			
-			return track;
+			return new NodeTrack(this);
 		}
 		
 		public Builder setEnvelope(Envelope bbox) {

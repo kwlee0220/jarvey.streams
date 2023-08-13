@@ -97,6 +97,5 @@ public class GsonSerde<T> implements Serde<T> {
 				return null;
 			}
 		}
-		
 	}
 }

@@ -6,10 +6,10 @@ import java.util.function.Function;
 
 import com.google.common.collect.Maps;
 
-import jarvey.streams.model.Timestamped;
-import utils.func.FOption;
 import utils.func.Tuple;
 import utils.stream.FStream;
+
+import jarvey.streams.model.Timestamped;
 
 
 /**
@@ -28,14 +28,14 @@ public class WindowBasedAggregation<T extends Timestamped, A extends Aggregator<
 	
 	public List<Windowed<R>> collect(T event) {
 		Tuple<List<Window>, List<Window>> tup = m_windowMgr.collect(event.getTimestamp());
-		
+		List<Window> expireds = tup._1;
 		List<Window> assigneds = tup._2;
+		
 		for ( Window window: assigneds ) {
 			A aggr = m_aggrs.computeIfAbsent(window, m_aggrFactory::apply);
 			aggr.aggregate(event);
 		}
 		
-		List<Window> expireds = tup._1;
 		List<Windowed<R>> results
 			= FStream.from(expireds)
 					.filter(m_aggrs::containsKey)
@@ -46,10 +46,5 @@ public class WindowBasedAggregation<T extends Timestamped, A extends Aggregator<
 		}
 		
 		return results;
-	}
-	
-	private FOption<Windowed<R>> toWindowed(Window window) {
-		return FOption.ofNullable(m_aggrs.get(window))
-						.map(r -> Windowed.of(window, r.close()));
 	}
 }

@@ -8,6 +8,7 @@ import org.locationtech.jts.geom.Point;
 import com.google.common.base.Objects;
 import com.google.gson.annotations.SerializedName;
 
+import jarvey.streams.node.NodeTrack;
 import jarvey.streams.serialization.json.GsonSerde;
 import jarvey.streams.serialization.json.GsonUtils;
 import utils.geo.util.GeoUtils;
@@ -41,7 +42,7 @@ public final class LocalTrack implements ObjectTrack {
 	}
 	
 	@Override
-	public String getId() {
+	public String getKey() {
 		return getTrackletId().toString();
 	}
 	

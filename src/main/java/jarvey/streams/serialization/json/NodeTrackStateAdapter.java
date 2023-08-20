@@ -6,7 +6,7 @@ import com.google.gson.TypeAdapter;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 
-import jarvey.streams.model.NodeTrack;
+import jarvey.streams.node.NodeTrack;
 
 
 /**

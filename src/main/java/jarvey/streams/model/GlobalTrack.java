@@ -18,11 +18,11 @@ import utils.stream.FStream;
  * @author Kang-Woo Lee (ETRI)
  */
 public final class GlobalTrack implements ObjectTrack {
-	@SerializedName("node") private String m_nodeId;
+	@SerializedName("node") private String m_node;
 	@SerializedName("track_id") private String m_trackId;
 	@Nullable @SerializedName("location") Point m_location;
 	@Nullable @SerializedName("overlap_area") String m_overlapArea;
-	@Nullable @SerializedName("supports") List<LocalTrack> m_ltracks;
+	@Nullable @SerializedName("supports") List<LocalTrack> m_supports;
 	@SerializedName("ts") private long m_ts;
 	
 	public static final GlobalTrack deleted(LocalTrack track, String overlapArea) {
@@ -34,26 +34,26 @@ public final class GlobalTrack implements ObjectTrack {
 	}
 	
 	public GlobalTrack(LocalTrack track, String overlapArea) {
-		m_nodeId = track.getNodeId();
+		m_node = track.getNodeId();
 		m_trackId = track.getTrackId();
 		m_location = track.getLocation();
 		m_overlapArea = overlapArea;
-		m_ltracks = null;
+		m_supports = null;
 		m_ts = track.getTimestamp();
 	}
 	
 	public GlobalTrack(TrackletId tracklet, String overlapArea, Point loc,
 						List<LocalTrack> ltracks, long ts) {
-		m_nodeId = tracklet.getNodeId();
+		m_node = tracklet.getNodeId();
 		m_trackId = tracklet.getTrackId();
 		m_overlapArea = overlapArea;
 		m_location = loc;
-		m_ltracks = ltracks;
+		m_supports = ltracks;
 		m_ts = ts;
 	}
 	
 	public String getNodeId() {
-		return m_nodeId;
+		return m_node;
 	}
 	
 	public String getTrackId() {
@@ -61,11 +61,11 @@ public final class GlobalTrack implements ObjectTrack {
 	}
 	
 	public TrackletId getTrackletId() {
-		return new TrackletId(m_nodeId, m_trackId);
+		return new TrackletId(m_node, m_trackId);
 	}
 
 	@Override
-	public String getId() {
+	public String getKey() {
 		return getTrackletId().toString();
 	}
 	
@@ -74,15 +74,19 @@ public final class GlobalTrack implements ObjectTrack {
 	}
 	
 	public boolean isClustered() {
-		return m_ltracks.size() > 1;
+		return m_supports.size() > 1;
 	}
 	
 	public Point getLocation() {
 		return m_location;
 	}
 	
+	public String getOverlapArea() {
+		return m_overlapArea;
+	}
+	
 	public List<LocalTrack> getLocalTracks() {
-		return m_ltracks;
+		return m_supports;
 	}
 	
 	public long getTimestamp() {
@@ -90,7 +94,7 @@ public final class GlobalTrack implements ObjectTrack {
 	}
 	
 	public boolean isSameTrack(GlobalTrack other) {
-		return Objects.equal(m_nodeId, other.m_nodeId)
+		return Objects.equal(m_node, other.m_node)
 				&& Objects.equal(m_trackId, other.m_trackId);
 	}
 	
@@ -101,8 +105,8 @@ public final class GlobalTrack implements ObjectTrack {
 		}
 		
 		String locStr = m_location != null ? GeoUtils.toString(m_location, 1) : "none";
-		if ( m_ltracks != null ) {
-			String supportStr = FStream.from(m_ltracks)
+		if ( m_supports != null ) {
+			String supportStr = FStream.from(m_supports)
 										.map(LocalTrack::getTrackletId)
 										.sort()
 										.map(TrackletId::toString)

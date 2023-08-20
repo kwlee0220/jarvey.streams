@@ -2,7 +2,7 @@ package jarvey.streams;
 
 
 /**
- * 
+ *
  * @author Kang-Woo Lee (ETRI)
  */
 public interface Aggregator<T,R> {

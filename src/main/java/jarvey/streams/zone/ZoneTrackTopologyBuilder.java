@@ -16,7 +16,7 @@ import org.apache.kafka.streams.state.Stores;
 import com.google.common.collect.Lists;
 
 import jarvey.streams.TrackTimestampExtractor;
-import jarvey.streams.model.NodeTrack;
+import jarvey.streams.node.NodeTrack;
 import jarvey.streams.serialization.json.GsonUtils;
 
 /**

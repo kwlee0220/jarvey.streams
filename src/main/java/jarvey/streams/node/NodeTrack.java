@@ -1,4 +1,4 @@
-package jarvey.streams.model;
+package jarvey.streams.node;
 
 import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.Point;
@@ -9,11 +9,16 @@ import com.google.gson.annotations.SerializedName;
 import utils.geo.util.GeoUtils;
 import utils.stream.FStream;
 
+import jarvey.streams.model.ObjectTrack;
+import jarvey.streams.model.Timestamped;
+import jarvey.streams.model.TrackletId;
+import jarvey.streams.updatelog.KeyedUpdate;
+
 /**
  * 
  * @author Kang-Woo Lee (ETRI)
  */
-public final class NodeTrack implements Timestamped, ObjectTrack, Comparable<NodeTrack> {
+public final class NodeTrack implements Timestamped, ObjectTrack, KeyedUpdate, Comparable<NodeTrack> {
 	public static enum State {
 		Tentative("T"),
 		Confirmed("C"),
@@ -72,8 +77,13 @@ public final class NodeTrack implements Timestamped, ObjectTrack, Comparable<Nod
 	}
 
 	@Override
-	public String getId() {
+	public String getKey() {
 		return getTrackletId().toString();
+	}
+
+	@Override
+	public boolean isLastUpdate() {
+		return isDeleted();
 	}
 
 	@Override

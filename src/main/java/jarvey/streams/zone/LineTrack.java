@@ -24,15 +24,15 @@ public final class LineTrack implements Timestamped {
 	@SerializedName("ts") private long m_ts;
 	
 	public static LineTrack from(ObjectTrack from, ObjectTrack to) {
-		return new LineTrack(to.getId(), from.getLocation(), to.getLocation(), to.getTimestamp());
+		return new LineTrack(to.getKey(), from.getLocation(), to.getLocation(), to.getTimestamp());
 	}
 	
 	public static LineTrack from(ObjectTrack t) {
-		return new LineTrack(t.getId(), null, t.getLocation(), t.getTimestamp());
+		return new LineTrack(t.getKey(), null, t.getLocation(), t.getTimestamp());
 	}
 	
 	public static LineTrack DELETED(ObjectTrack track) {
-		return new LineTrack(track.getId(), null, null, track.getTimestamp());
+		return new LineTrack(track.getKey(), null, null, track.getTimestamp());
 	}
 	
 	private LineTrack(String id, Point start, Point stop, long ts) {

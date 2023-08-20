@@ -16,7 +16,7 @@ import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
 
-import jarvey.streams.model.NodeTrack;
+import jarvey.streams.node.NodeTrack;
 import jarvey.streams.zone.ZoneLineRelation;
 
 /**

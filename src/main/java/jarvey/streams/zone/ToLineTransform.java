@@ -37,7 +37,7 @@ class ToLineTransform<T extends ObjectTrack> implements ValueTransformer<T, Iter
 	public Iterable<LineTrack> transform(T track) {
 		deleteOldEntries(track.getTimestamp());
 		
-		String trkId = track.getId();
+		String trkId = track.getKey();
 		if ( track.isDeleted() ) {
 			// 'Delete' event의 경우에는 출력 event를 생성하지 않음.
 			s_logger.debug("delete: tracklet={}", trkId);

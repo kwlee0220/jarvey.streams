@@ -10,20 +10,20 @@ import jarvey.streams.model.Timestamped;
  * 
  * @author Kang-Woo Lee (ETRI)
  */
-public class EventCollectingAggregation<T extends Timestamped>
+public class EventCollectingWindowAggregation<T extends Timestamped>
 				extends WindowBasedAggregation<T, Aggregator<T,List<T>>, List<T>> {
-	public EventCollectingAggregation(HoppingWindowManager windowMgr) {
-		super(windowMgr, w -> new EventCollector<>());
+	public EventCollectingWindowAggregation(HoppingWindowManager windowMgr) {
+		super(windowMgr, EventCollectingAggregator::new);
 	}
-
-	private static class EventCollector<T extends Timestamped> implements Aggregator<T,List<T>> {
+	
+	private static class EventCollectingAggregator<T extends Timestamped> implements Aggregator<T,List<T>> {
 		private final List<T> m_coll = Lists.newArrayList();
 		
 		@Override
 		public void aggregate(T data) {
 			m_coll.add(data);
 		}
-	
+
 		@Override
 		public List<T> close() {
 			return m_coll;

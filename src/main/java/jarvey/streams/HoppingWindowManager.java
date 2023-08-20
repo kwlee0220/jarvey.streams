@@ -59,7 +59,7 @@ public class HoppingWindowManager {
 		return this;
 	}
 	
-	public long getCurrentTime() {
+	public long getLastTimestamp() {
 		return m_currentTs;
 	}
 	
@@ -72,6 +72,13 @@ public class HoppingWindowManager {
 		}
 		
 		return window;
+	}
+	
+	public List<Window> close() {
+		List<Window> windows = Lists.newArrayList(m_windows);
+		m_windows.clear();
+		
+		return windows;
 	}
 	
 	public Tuple<List<Window>, List<Window>> collect(long ts) {

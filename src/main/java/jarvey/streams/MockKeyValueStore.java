@@ -165,6 +165,11 @@ public class MockKeyValueStore<K,V> implements KeyValueStore<K,V> {
 		@Override
 		public void close() {
 		}
+		
+		@Override
+		public void remove() {
+			m_iter.remove();
+		}
 
 		@Override
 		public K peekNextKey() {

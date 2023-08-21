@@ -75,12 +75,21 @@ public final class KeyedUpdateLogIndexBuilder<T extends KeyedUpdate> implements 
 	@Option(names={"--input"}, paramLabel="topic-name", description="input topic name")
 	public KeyedUpdateLogIndexBuilder<T> setInputTopic(String topic) {
 		m_inputTopic = topic;
-		m_updateDelimitTopic = topic + "-delimit";
+		
+		if ( m_updateDelimitTopic == null ) {
+			m_updateDelimitTopic = topic + "-delimit";
+		}
 		
 		if ( m_indexTableName == null ) {
 			setIndexTableName(topic.replace('-', '_') + "_index");
 		}
 		
+		return this;
+	}	
+
+	@Option(names={"--delimit"}, paramLabel="topic-name", description="update delimit topic name")
+	public KeyedUpdateLogIndexBuilder<T> setUpdateDelimitTopic(String topic) {
+		m_updateDelimitTopic = topic;
 		return this;
 	}
 
@@ -170,8 +179,7 @@ public final class KeyedUpdateLogIndexBuilder<T extends KeyedUpdate> implements 
 							.withName("consume-delimiters")
 							.withTimestampExtractor(TS_EXTRACTOR)
 							.withOffsetResetPolicy(m_kafkaParams.getAutoOffsetReset()))
-			.filter((k, idx) -> idx.isClosed(), Named.as("select-last-index"))
-//			.print(Printed.toSysOut());
+			.filter((k, idx) -> idx.isClosed(), Named.as("filter-last-update"))
 			.foreach(this::export);
 		
 		return builder.build();

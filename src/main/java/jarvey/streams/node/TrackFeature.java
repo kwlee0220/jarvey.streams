@@ -15,12 +15,12 @@ import jarvey.streams.updatelog.KeyedUpdate;
 public final class TrackFeature implements KeyedUpdate, Comparable<TrackFeature> {
 	@SerializedName("node") private String m_node;
 	@SerializedName("track_id") private String m_trackId;
-	@Nullable @SerializedName("feature") private byte[] m_feature;
+	@Nullable @SerializedName("feature") private float[] m_feature;
 	@Nullable @SerializedName("zone_relation") private String m_zoneRelation;
 	@SerializedName("frame_index") private long m_frameIndex;
 	@SerializedName("ts") private long m_ts;
 	
-	public TrackFeature(String node, String trackId, byte[] feature, String zoneRelation,
+	public TrackFeature(String node, String trackId, float[] feature, String zoneRelation,
 						long frameIndex, long ts) {
 		m_node = node;
 		m_trackId = trackId;
@@ -49,10 +49,10 @@ public final class TrackFeature implements KeyedUpdate, Comparable<TrackFeature>
 
 	@Override
 	public boolean isLastUpdate() {
-		return m_feature == null;
+		return "D".equals(m_zoneRelation);
 	}
 	
-	public byte[] getFeature() {
+	public float[] getFeature() {
 		return m_feature;
 	}
 	

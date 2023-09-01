@@ -36,7 +36,7 @@ public class ConsumerRecordStream implements FStream<ConsumerRecord<String,byte[
 	private final boolean m_stopOnPollTimeout;
 	private final TopicPartition m_tpart;
 	private final Range<Long> m_offsetRange;
-	private final Set<String> m_keys;
+	private final Set<String> m_topicKeys;
 	private final ConsumerRecordGenerator m_generator;
 	
 	private ConsumerRecordStream(Builder builder) {
@@ -44,7 +44,7 @@ public class ConsumerRecordStream implements FStream<ConsumerRecord<String,byte[
 		m_initialPollTimeout = builder.m_initialPollTimeout;
 		m_pollTimeout = builder.m_pollTimeout;
 		m_stopOnPollTimeout = builder.m_stopOnPollTimeout;
-		m_keys = builder.m_keys;
+		m_topicKeys = builder.m_topicKeys;
 
 		m_consumer = new KafkaConsumer<>(builder.m_consumerProps);
 		if ( builder.m_ranges.size() > 0 ) {
@@ -100,7 +100,7 @@ public class ConsumerRecordStream implements FStream<ConsumerRecord<String,byte[
 					for ( TopicPartition tpart: records.partitions() ) {
 						if ( m_tpart == null || m_tpart.equals(tpart) ) {
 							for ( ConsumerRecord<String, byte[]> record: records.records(tpart) ) {
-								if ( m_keys != null && !m_keys.contains(record.key()) ) {
+								if ( m_topicKeys != null && !m_topicKeys.contains(record.key()) ) {
 									continue;
 								}
 								
@@ -136,7 +136,7 @@ public class ConsumerRecordStream implements FStream<ConsumerRecord<String,byte[
 		private Duration m_pollTimeout = Duration.ofSeconds(5);
 		private boolean m_stopOnPollTimeout = false;
 		private Map<TopicPartition,Range<Long>> m_ranges = Maps.newHashMap();
-		private Set<String> m_keys;
+		private Set<String> m_topicKeys;
 		
 		public ConsumerRecordStream build() {
 			return new ConsumerRecordStream(this);
@@ -178,8 +178,8 @@ public class ConsumerRecordStream implements FStream<ConsumerRecord<String,byte[
 			return this;
 		}
 		
-		public Builder key(Iterable<String> keys) {
-			m_keys = Sets.newHashSet(keys);
+		public Builder topicKeys(Iterable<String> keys) {
+			m_topicKeys = Sets.newHashSet(keys);
 			return this;
 		}
 	}

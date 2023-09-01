@@ -12,6 +12,7 @@ import org.apache.kafka.clients.admin.Admin;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.AdminClientConfig;
 import org.apache.kafka.clients.admin.CreateTopicsResult;
+import org.apache.kafka.clients.admin.DeleteConsumerGroupsResult;
 import org.apache.kafka.clients.admin.DeleteTopicsResult;
 import org.apache.kafka.clients.admin.DescribeTopicsResult;
 import org.apache.kafka.clients.admin.ListTopicsOptions;
@@ -77,6 +78,14 @@ public class KafkaAdmins {
 		throws InterruptedException, ExecutionException {
 		try ( AdminClient client = AdminClient.create(m_adminProps) ) {
 			DeleteTopicsResult result = client.deleteTopics(Collections.singleton(topicName));
+			result.all().get();
+		}
+	}
+	
+	public void deleteConsumerGroup(String grpId)
+		throws InterruptedException, ExecutionException {
+		try ( AdminClient client = AdminClient.create(m_adminProps) ) {
+			DeleteConsumerGroupsResult result = client.deleteConsumerGroups(Collections.singleton(grpId));
 			result.all().get();
 		}
 	}

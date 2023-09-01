@@ -52,6 +52,18 @@ public class Window implements Comparable<Window> {
 		return Long.compare(m_beginTime, o.m_beginTime);
 	}
 	
+	public int compareTo(long ts) {
+		if ( ts < m_beginTime ) {
+			return 1;
+		}
+		else if ( ts >= m_endTime ) {
+			return -1;
+		}
+		else {
+			return 0;
+		}
+	}
+	
 	@Override
 	public int hashCode() {
 		return Objects.hashCode(m_beginTime, m_endTime);

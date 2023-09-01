@@ -1,5 +1,6 @@
 package jarvey.streams.model;
 
+import com.google.common.base.Objects;
 
 /**
  * 
@@ -25,6 +26,24 @@ public final class TrackletDeleted implements Timestamped {
 	@Override
 	public long getTimestamp() {
 		return m_ts;
+	}
+	
+	@Override
+	public boolean equals(Object obj) {
+		if ( this == obj ) {
+			return true;
+		}
+		else if ( obj == null || obj.getClass() != getClass() ) {
+			return false;
+		}
+		
+		TrackletDeleted other = (TrackletDeleted)obj;
+		return Objects.equal(m_id, other.m_id) && Objects.equal(m_ts, other.m_ts);
+	}
+	
+	@Override
+	public int hashCode() {
+		return Objects.hashCode(m_id, m_ts);
 	}
 	
 	@Override

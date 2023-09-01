@@ -8,10 +8,11 @@ import org.locationtech.jts.geom.Point;
 import com.google.common.base.Objects;
 import com.google.gson.annotations.SerializedName;
 
+import utils.geo.util.GeoUtils;
+
 import jarvey.streams.node.NodeTrack;
 import jarvey.streams.serialization.json.GsonSerde;
 import jarvey.streams.serialization.json.GsonUtils;
-import utils.geo.util.GeoUtils;
 
 
 /**
@@ -24,6 +25,7 @@ public final class LocalTrack implements ObjectTrack {
 	@SerializedName("node") private final String m_nodeId;
 	@SerializedName("track_id") private final String m_trackId;
 	@SerializedName("location") @Nullable private final Point m_location;
+	@SerializedName("first_ts") private final long m_firstTs;
 	@SerializedName("ts") private final long m_ts;
 	
 	public static final Serde<LocalTrack> getGsonSerde() {
@@ -38,6 +40,7 @@ public final class LocalTrack implements ObjectTrack {
 		m_nodeId = track.getNodeId();
 		m_trackId = track.getTrackId();
 		m_location = (track.isDeleted()) ? null : track.getLocation();
+		m_firstTs = track.getFirstTimestamp();
 		m_ts = track.getTimestamp();
 	}
 	
@@ -65,6 +68,10 @@ public final class LocalTrack implements ObjectTrack {
 	@Override
 	public Point getLocation() {
 		return m_location;
+	}
+	
+	public long getFirstTimestamp() {
+		return m_firstTs;
 	}
 	
 	@Override

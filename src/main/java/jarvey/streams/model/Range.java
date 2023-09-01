@@ -4,6 +4,8 @@ import java.util.Objects;
 
 import com.google.gson.annotations.SerializedName;
 
+import utils.func.Funcs;
+
 
 /**
  *
@@ -23,6 +25,10 @@ public class Range<T extends Comparable<T>> implements Comparable<Range<T>> {
 	
 	public static <T extends Comparable<T>> Range<T> atLeast(T min) {
 		return new Range<>(min, (T)null);
+	}
+	
+	public static <T extends Comparable<T>> Range<T> atMost(T max) {
+		return new Range<>((T)null, max);
 	}
 	
 	public static <T extends Comparable<T>> Range<T> at(T v) {
@@ -57,7 +63,7 @@ public class Range<T extends Comparable<T>> implements Comparable<Range<T>> {
 	
 	public void expand(T v) {
 		m_min = min(m_min, v);
-		m_max = max(m_max, v);
+		m_max = max((m_max == null) ? m_min : m_max, v);
 	}
 	
 	public boolean contains(T v) {

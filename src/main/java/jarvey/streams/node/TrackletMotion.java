@@ -5,28 +5,33 @@ import javax.annotation.Nullable;
 import com.google.common.base.Objects;
 import com.google.gson.annotations.SerializedName;
 
+import utils.func.Funcs;
+
 import jarvey.streams.model.TrackletId;
-import jarvey.streams.model.ZoneRelation;
 import jarvey.streams.updatelog.KeyedUpdate;
 
 /**
  * 
  * @author Kang-Woo Lee (ETRI)
  */
-public final class TrackFeature implements KeyedUpdate, Comparable<TrackFeature> {
+public final class TrackletMotion implements KeyedUpdate, Comparable<TrackletMotion> {
 	@SerializedName("node") private String m_node;
 	@SerializedName("track_id") private String m_trackId;
-	@Nullable @SerializedName("feature") private float[] m_feature;
-	@Nullable @SerializedName("zone_relation") private String m_zoneRelation;
+	@Nullable @SerializedName("zone_sequence") private String m_zoneSequence;
+	@Nullable @SerializedName("enter_zone") private String m_enterZone;
+	@Nullable @SerializedName("exit_zone") private String m_exitZone;
+	@Nullable @SerializedName("motion") private String m_motion;
 	@SerializedName("frame_index") private long m_frameIndex;
 	@SerializedName("ts") private long m_ts;
 	
-	public TrackFeature(String node, String trackId, float[] feature, String zoneRelation,
-						long frameIndex, long ts) {
+	public TrackletMotion(String node, String trackId, String zoneSequence, String enterZone,
+						String exitZone, String motion, long frameIndex, long ts) {
 		m_node = node;
 		m_trackId = trackId;
-		m_feature = feature;
-		m_zoneRelation = zoneRelation;
+		m_zoneSequence = zoneSequence;
+		m_enterZone = enterZone;
+		m_exitZone = exitZone;
+		m_motion = motion;
 		m_frameIndex = frameIndex;
 		m_ts = ts;
 	}
@@ -47,26 +52,26 @@ public final class TrackFeature implements KeyedUpdate, Comparable<TrackFeature>
 	public String getKey() {
 		return getTrackletId().toString();
 	}
-	
-	public boolean isDeleted() {
-		return "D".equals(m_zoneRelation);
-	}
 
 	@Override
 	public boolean isLastUpdate() {
-		return isDeleted();
+		return true;
 	}
 	
-	public float[] getFeature() {
-		return m_feature;
+	public String getZoneSequence() {
+		return m_zoneSequence;
 	}
 	
-	public String getZoneRelationString() {
-		return m_zoneRelation;
+	public String getEnterZone() {
+		return m_enterZone;
 	}
 	
-	public ZoneRelation getZoneRelation() {
-		return ZoneRelation.parse(m_zoneRelation);
+	public String getExitZone() {
+		return m_exitZone;
+	}
+	
+	public String getMotion() {
+		return m_motion;
 	}
 	
 	public long getFrameIndex() {
@@ -78,7 +83,7 @@ public final class TrackFeature implements KeyedUpdate, Comparable<TrackFeature>
 	}
 	
 	@Override
-	public int compareTo(TrackFeature o) {
+	public int compareTo(TrackletMotion o) {
 		int cmp = Long.compare(m_ts, o.m_ts);
 		if ( cmp != 0 ) {
 			return cmp;
@@ -94,8 +99,10 @@ public final class TrackFeature implements KeyedUpdate, Comparable<TrackFeature>
 	
 	@Override
 	public String toString() {
-		String trackStr = (isLastUpdate()) ? "Deleted" : "Feature";
-		return String.format("%s[node=%s, track_id=%s, zone=%s, frame_idx=%d, ts=%d]",
-								trackStr, m_node, m_trackId, m_zoneRelation, m_frameIndex, m_ts);
+		String enter = Funcs.asNonNull(m_enterZone, "?");
+		String exit = Funcs.asNonNull(m_exitZone, "?");
+		return String.format("%s[%s -> %s, seq=%s, motion=%s, frame_idx=%d, ts=%d]",
+								getTrackletId(), enter, exit, m_zoneSequence, m_motion,
+								m_frameIndex, m_ts);
 	}
 }

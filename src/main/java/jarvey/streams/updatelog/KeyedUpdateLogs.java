@@ -12,11 +12,10 @@ import java.util.Set;
 
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.serialization.Deserializer;
+import org.apache.kafka.streams.KeyValue;
 
 import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 
-import utils.func.KeyValue;
 import utils.jdbc.JdbcProcessor;
 import utils.stream.FStream;
 
@@ -54,23 +53,23 @@ public class KeyedUpdateLogs<T extends KeyedUpdate> {
 		m_deserializer = deserializer;
 	}
 	
-	public FStream<T> stream(String key) {
-		return stream(readIndex(key));
+	public FStream<KeyValue<String,T>> streamOfKey(String key) {
+		return streamOfIndex(readIndex(key));
 	}
 	
 	public FStream<KeyValue<String,T>> streamOfKeys(Iterable<String> keys) {
 		return streamOfIndexes(readIndexes(keys).values());
 	}
 	
-	public FStream<T> stream(KeyedUpdateIndex index) {
+	public FStream<KeyValue<String,T>> streamOfIndex(KeyedUpdateIndex index) {
 		TopicPartition tpart = new TopicPartition(m_topic, index.getPartitionNumber());
 		ConsumerRecordStream stream 
 			= ConsumerRecordStream.from(m_consumerProps)
 									.addRange(tpart, index.getTopicOffsetRange())
 									.build();
 		
-		return stream.map(rec -> m_deserializer.deserialize(rec.topic(), rec.value()))
-					.filter(t -> index.getKey().contains(t.getKey()));
+		return stream.map(rec -> KeyValue.pair(rec.key(), m_deserializer.deserialize(rec.topic(), rec.value())))
+					.filter(kv -> index.getKey().contains(kv.value.getKey()));
 	}
 	
 	public FStream<KeyValue<String,T>> streamOfIndexes(Iterable<KeyedUpdateIndex> indexes) {
@@ -83,19 +82,58 @@ public class KeyedUpdateLogs<T extends KeyedUpdate> {
 		}
 		ConsumerRecordStream stream = builder.build();
 		
-		return stream.map(rec -> KeyValue.of(rec.key(), m_deserializer.deserialize(rec.topic(), rec.value())))
-					.filter(kv -> keys.contains(kv.value().getKey()));
+		return stream.map(rec -> KeyValue.pair(rec.key(), m_deserializer.deserialize(rec.topic(), rec.value())))
+					.filter(kv -> keys.contains(kv.value.getKey()));
+	}
+	
+	public List<KeyedUpdateIndex> listKeyedUpdateIndex(String whereClause) {
+		String sqlString = String.format("select * from %s where %s", m_idxTableName, whereClause);
+		try ( Connection conn = m_jdbc.connect() ) {
+			return m_jdbc.streamQuery(sqlString)
+							.mapOrThrow(this::readIndex)
+							.toList();
+		}
+		catch ( SQLException e ) {
+			throw new RuntimeException(e);
+		}
+	}
+	
+	public List<KeyedUpdateIndex> listKeyedUpdateIndexStopBetween(Range<Long> tsRange) {
+		String sqlString = String.format("select * from %s where last_ts between ? and ?", m_idxTableName);
+
+		try ( Connection conn = m_jdbc.connect() ) {
+			try ( PreparedStatement pstmt = conn.prepareStatement(sqlString) ) {
+				pstmt.setLong(1, tsRange.min());
+				pstmt.setLong(2, tsRange.max());
+				
+				return m_jdbc.executeQuery(pstmt)
+								.mapOrThrow(this::readIndex)
+								.toList();
+			}
+		}
+		catch ( SQLException e ) {
+			throw new RuntimeException(e);
+		}
 	}
 	
 	public List<KeyedUpdateIndex> listKeyedUpdateIndex(Range<Long> tsRange) {
+		String sqlString = null;
+		if ( tsRange.isInfiniteMin() && tsRange.isInfiniteMax() ) {
+			sqlString = String.format("select * from %s", m_idxTableName);
+		}
+		else if ( tsRange.isInfiniteMin() ) {
+			sqlString = String.format("select * from %s where last_ts <= %d", m_idxTableName, tsRange.max());
+		}
+		else if ( tsRange.isInfiniteMax() ) {
+			sqlString = String.format("select * from %s where first_ts >= %d", m_idxTableName, tsRange.min());
+		}
+		else {
+			sqlString = String.format("select * from %s where first_ts < %d and last_ts >= %d",
+										m_idxTableName, tsRange.max(), tsRange.min());
+		}
+		
 		try ( Connection conn = m_jdbc.connect() ) {
-			String sql = String.format("select key from %s where first_ts >= ? and last_ts <= ?",
-										m_idxTableName);
-			PreparedStatement pstmt = conn.prepareStatement(sql);
-			pstmt.setLong(1, tsRange.min());
-			pstmt.setLong(2, tsRange.max());
-			
-			return m_jdbc.executeQuery(pstmt)
+			return m_jdbc.streamQuery(sqlString)
 							.mapOrThrow(this::readIndex)
 							.toList();
 		}
@@ -124,7 +162,7 @@ public class KeyedUpdateLogs<T extends KeyedUpdate> {
 		}
 	}
 	
-	private Map<String,KeyedUpdateIndex> readIndexes(Iterable<String> keys) {
+	public Map<String,KeyedUpdateIndex> readIndexes(Iterable<String> keys) {
 		Map<String,KeyedUpdateIndex> indexes = Maps.newHashMap();
 		
 		try ( Connection conn = m_jdbc.connect() ) {

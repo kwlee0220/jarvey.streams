@@ -3,12 +3,14 @@ package jarvey.streams.serialization.json;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.List;
+import java.util.Map;
 
 import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.LineSegment;
 import org.locationtech.jts.geom.Point;
 
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
@@ -28,19 +30,29 @@ public class GsonUtils {
 		throw new AssertionError("should not be called: class=" + GsonUtils.class);
 	}
 	
-	private static final Gson s_gson;
+	private static final Map<Class<?>,Object> s_adaptors = Maps.newHashMap();
+	static {
+		s_adaptors.put(Point.class, new PointAdapter());
+		s_adaptors.put(Envelope.class, new EnvelopeAdater());
+		s_adaptors.put(LineSegment.class, new LineSegmentAdapter());
+		s_adaptors.put(ZoneLineRelation.class, new ZoneLineRelationAdapter());
+		s_adaptors.put(NodeTrack.State.class, new NodeTrackStateAdapter());
+	}
+	
+	private static Gson s_gson;
 	static {
 		GsonBuilder builder = new GsonBuilder();
-		builder.registerTypeAdapter(Point.class, new PointAdapter());
-		builder.registerTypeAdapter(Envelope.class, new EnvelopeAdater());
-		builder.registerTypeAdapter(LineSegment.class, new LineSegmentAdapter());
-		builder.registerTypeAdapter(ZoneLineRelation.class, new ZoneLineRelationAdapter());
-		builder.registerTypeAdapter(NodeTrack.State.class, new NodeTrackStateAdapter());
-		s_gson = builder.create();
+		s_adaptors.forEach(builder::registerTypeAdapter);
+		s_gson = buildGson();
 	}
 	
 	public static Gson getGson() {
 		return s_gson;
+	}
+	
+	public static void registerTypeAdpator(Class<?> typeClass, Object adaptor) {
+		s_adaptors.put(typeClass, adaptor);
+		s_gson = buildGson();
 	}
 	
 	public static <T> GsonSerde<T> getSerde(Class<T> cls) {
@@ -120,5 +132,11 @@ public class GsonUtils {
 		}
 		
 		out.endArray();
+	}
+	
+	private static Gson buildGson() {
+		GsonBuilder builder = new GsonBuilder();
+		s_adaptors.forEach(builder::registerTypeAdapter);
+		return builder.create();
 	}
 }

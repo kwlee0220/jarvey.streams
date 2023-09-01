@@ -46,23 +46,13 @@ public final class NodeTrack implements Timestamped, ObjectTrack, KeyedUpdate, C
 	@SerializedName("track_id") private String m_trackId;
 	@SerializedName("state") private State m_state;
 	@SerializedName("location") private Envelope m_box;
-	@SerializedName("frame_index") private long m_frameIndex;
-	@SerializedName("ts") private long m_ts;
 	@SerializedName("world_coord") private Point m_worldCoords;
 	@SerializedName("distance") private double m_distance;
 	@SerializedName("zone_relation") private String m_zoneRelation;
-	
-	private NodeTrack(NodeTrack.Builder builder) {
-		m_nodeId = builder.m_nodeId;
-		m_trackId = builder.m_trackId;
-		m_state = builder.m_state;
-		m_box = builder.m_box;
-		m_frameIndex = builder.m_frameIndex;
-		m_ts = builder.m_ts;
-		m_worldCoords = builder.m_worldCoords;
-		m_distance = builder.m_distance;
-		m_zoneRelation = builder.m_zoneRelation;
-	}
+	@SerializedName("zone_sequence") private String m_zoneSequence;
+	@SerializedName("first_ts") private long m_firstTs;
+	@SerializedName("frame_index") private long m_frameIndex;
+	@SerializedName("ts") private long m_ts;
 	
 	public String getNodeId() {
 		return m_nodeId;
@@ -111,6 +101,14 @@ public final class NodeTrack implements Timestamped, ObjectTrack, KeyedUpdate, C
 		return m_frameIndex;
 	}
 	
+	public long getAge() {
+		return m_ts - m_firstTs;
+	}
+	
+	public long getFirstTimestamp() {
+		return m_firstTs;
+	}
+	
 	public long getTimestamp() {
 		return m_ts;
 	}
@@ -125,6 +123,10 @@ public final class NodeTrack implements Timestamped, ObjectTrack, KeyedUpdate, C
 	
 	public String getZoneRelation() {
 		return m_zoneRelation;
+	}
+	
+	public String getZoneSequence() {
+		return m_zoneSequence;
 	}
 	
 	public boolean isSameTrack(NodeTrack other) {
@@ -151,61 +153,7 @@ public final class NodeTrack implements Timestamped, ObjectTrack, KeyedUpdate, C
 		String trackStr = (isDeleted()) ? "Deleted" : "Tracked";
 		String bboxStr = (m_box != null) ? GeoUtils.toString(m_box, 0) : "null";
 		String worldCoordStr = m_worldCoords != null ? GeoUtils.toString(m_worldCoords, 1) : "null";
-		return String.format("%s[node=%s, track_id=%s, box=%s, world=%s, zone=%s, frame_idx=%d, ts=%d]",
-								trackStr, m_nodeId, m_trackId,
-								bboxStr, worldCoordStr,
-								m_zoneRelation, m_frameIndex, m_ts);
-	}
-
-	public static Builder builder(String nodeId, String trackId, State state, long ts) {
-		return new Builder(nodeId, trackId, state, ts);
-	}
-	public static class Builder {
-		private final String m_nodeId;
-		private final String m_trackId;
-		private final State m_state;
-		private final long m_ts;
-		
-		private Envelope m_box = null;
-		private Point m_worldCoords = null;
-		private double m_distance = -1;
-		private long m_frameIndex = -1;
-		private String m_zoneRelation = null;
-		
-		private Builder(String nodeId, String trackId, State state, long ts) {
-			m_nodeId = nodeId;
-			m_trackId = trackId;
-			m_state = state;
-			m_ts = ts;
-		}
-		
-		public NodeTrack build() {
-			return new NodeTrack(this);
-		}
-		
-		public Builder setEnvelope(Envelope bbox) {
-			m_box = bbox;
-			return this;
-		}
-		
-		public Builder setWorldCoordinate(Point coord) {
-			m_worldCoords = coord;
-			return this;
-		}
-		
-		public Builder setDistance(double distance) {
-			m_distance = distance;
-			return this;
-		}
-		
-		public Builder setZoneRelation(String zoneRelation) {
-			m_zoneRelation = zoneRelation;
-			return this;
-		}
-		
-		public Builder setFrameIndex(int frameIndex) {
-			m_frameIndex = frameIndex;
-			return this;
-		}
+		return String.format("%s[%s, world=%s, frame_idx=%d, ts=%d]",
+								trackStr, getTrackletId(), worldCoordStr, m_frameIndex, m_ts);
 	}
 }

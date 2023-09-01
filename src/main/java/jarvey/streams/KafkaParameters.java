@@ -35,6 +35,7 @@ public class KafkaParameters {
 	private String m_valueSerdeClassName = Serdes.ByteArray().getClass().getName();
 	
 	private long m_maxPollIntervalMs = -1;
+	private int m_maxPollRecords = -1;
 	
 	public String getBootstrapServers() {
 		return m_bootstrapServers;
@@ -163,6 +164,15 @@ public class KafkaParameters {
 	public void setMaxPollInterval(String intvlStr) {
 		m_maxPollIntervalMs = UnitUtils.parseDuration(intvlStr);
 	}
+
+	public int getMaxPollRecords() {
+		return m_maxPollRecords;
+	}
+	
+	@Option(names={"--max.poll.records"}, paramLabel="count")
+	public void setMaxPollRecords(int count) {
+		m_maxPollRecords = count;
+	}
 	
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public Properties toProducerProperties() {
@@ -233,6 +243,9 @@ public class KafkaParameters {
 			if ( m_maxPollIntervalMs > 0 ) {
 				props.put(ConsumerConfig.MAX_POLL_INTERVAL_MS_CONFIG, m_maxPollIntervalMs);
 			}
+			if ( m_maxPollRecords > 0 ) {
+				props.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, m_maxPollRecords);
+			}
 			
 			return props;
 		}
@@ -250,6 +263,9 @@ public class KafkaParameters {
 		props.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, m_bootstrapServers);
 		props.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, m_keySerdeClassName);
 		props.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, m_valueSerdeClassName);
+		if ( m_maxPollRecords > 0 ) {
+			props.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, m_maxPollRecords);
+		}
 		
 		return props;
 	}

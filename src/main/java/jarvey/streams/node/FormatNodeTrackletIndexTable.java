@@ -1,4 +1,4 @@
-package jarvey.streams.updatelog;
+package jarvey.streams.node;
 
 import java.sql.Connection;
 
@@ -16,7 +16,7 @@ import picocli.CommandLine.Option;
  * 
  * @author Kang-Woo Lee (ETRI)
  */
-public class FormatKeyedUpdateIndexTable implements CheckedRunnable {
+public class FormatNodeTrackletIndexTable implements CheckedRunnable {
 	@Mixin private UsageHelp m_help;
 	@Mixin private JdbcParameters m_jdbcParams;
 	
@@ -26,13 +26,13 @@ public class FormatKeyedUpdateIndexTable implements CheckedRunnable {
 	public void run() throws Exception {
 		JdbcProcessor jdbc = m_jdbcParams.createJdbcProcessor();
 		try ( Connection conn = jdbc.connect() ) {
-			KeyedUpdateIndexBuilder.dropTable(conn, m_tableName);
-			KeyedUpdateIndexBuilder.createTable(conn, m_tableName);
+			NodeTrackletUpdateLogs.dropIndexTable(conn, m_tableName);
+			NodeTrackletUpdateLogs.createIndexTable(conn, m_tableName);
 		}
 	}
 	
 	public static final void main(String... args) throws Exception {
-		FormatKeyedUpdateIndexTable cmd = new FormatKeyedUpdateIndexTable();
+		FormatNodeTrackletIndexTable cmd = new FormatNodeTrackletIndexTable();
 		CommandLine commandLine = new CommandLine(cmd).setUsageHelpWidth(100);
 		try {
 			commandLine.parse(args);

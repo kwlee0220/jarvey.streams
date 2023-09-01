@@ -82,22 +82,25 @@ public class HoppingWindowManager {
 	}
 	
 	public Tuple<List<Window>, List<Window>> collect(long ts) {
-		List<Window> closeds = Collections.emptyList();
+		List<Window> expireds = Collections.emptyList();
 		if ( ts > m_currentTs ) {
 			m_currentTs = ts;
 			
 			// Grace time까지 고려할 때, close 시킬 window를 찾는다.
-			closeds = FStream.from(m_windows)
+			expireds = FStream.from(m_windows)
 							.takeWhile(w -> w.endTime()+m_graceTime <= ts)
 							.peek(Window::close)
 							.toList();
-			if ( closeds.size() > 0 ) {
+			if ( expireds.size() > 0 ) {
 				if ( s_logger.isDebugEnabled() ) {
-					s_logger.debug("close windows: {}", closeds);
+					s_logger.debug("expired windows: {}", expireds);
 				}
-				m_windows.removeAll(closeds);
+				m_windows.removeAll(expireds);
 			}
 			
+			// 새로 입력된 timestamp를 기준으로 추가로 생성되어야할 window가 필요한가
+			// 검사하여 필요한 window들을 생성하여 추가한다.
+			// 입력 timestamp가 많이 커진 경우에는 여러 개의 window가 생성될 수도 있다.
 			Window last = Funcs.asNonNull(Funcs.getLast(m_windows), () -> addNewWindow(ts));
 			while ( true ) {
 				long nextWindowBeginTs = last.beginTime() + m_advanceTime;
@@ -120,11 +123,10 @@ public class HoppingWindowManager {
 		
 		// 시간 범위가 맞는 window들에 aggregation을 시도한다.
 		List<Window> updateds = FStream.from(m_windows)
-										.dropWhile(w -> w.isAfter(ts))
-										.takeWhile(w -> w.contains(ts))
+										.filter(w -> w.compareTo(ts) == 0)
 										.toList();
 		
-		return Tuple.of(closeds, updateds);
+		return Tuple.of(expireds, updateds);
 	}
 	
 	@Override

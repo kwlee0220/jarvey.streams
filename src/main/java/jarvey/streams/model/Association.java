@@ -1,5 +1,6 @@
 package jarvey.streams.model;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
 
@@ -14,10 +15,44 @@ import utils.stream.FStream;
  */
 public interface Association extends Timestamped {
 	public static enum BinaryRelation {
+		SAME,
+		LEFT_SUBSUME,
+		RIGHT_SUBSUME,
 		DISJOINT,
 		MERGEABLE,
 		CONFLICT,
 	};
+	
+	public static class RelationResult {
+		private final BinaryRelation m_relation;
+		private final Set<TrackletId> m_overlaps;
+		private final Set<TrackletId> m_leftDifferences;
+		private final Set<TrackletId> m_rightDifferences;
+		
+		public RelationResult(BinaryRelation rel, Set<TrackletId> overlaps,
+								Set<TrackletId> leftDifference, Set<TrackletId> rightDifference) {
+			m_relation = rel;
+			m_overlaps = overlaps;
+			m_leftDifferences = leftDifference;
+			m_rightDifferences = rightDifference;
+		}
+		
+		public BinaryRelation getRelation() {
+			return m_relation;
+		}
+		
+		public Set<TrackletId> getOverlap() {
+			return m_overlaps;
+		}
+		
+		public Set<TrackletId> getLeftDifference() {
+			return m_leftDifferences;
+		}
+		
+		public Set<TrackletId> getRightDifference() {
+			return m_rightDifferences;
+		}
+	}
 	
 	public String getId();
 	
@@ -104,6 +139,17 @@ public interface Association extends Timestamped {
 		return Funcs.map(getTracklets(), TrackletId::getNodeId);
 	}
 	
+	public default TrackletId getLeader() {
+		return TrackletId.fromString(getId());
+	}
+	
+	public default Set<TrackletId> getFollowers() {
+		TrackletId leaderTrkId = getLeader();
+		return FStream.from(getTracklets())
+						.filterNot(leaderTrkId::equals)
+						.toSet();
+	}
+	
 	/**
 	 * 두 association 사이의 관계를 반환한다.
 	 * 두 association 사이의 관계를 아래와 같다.
@@ -127,19 +173,29 @@ public interface Association extends Timestamped {
 			return BinaryRelation.DISJOINT;
 		}
 
-		Set<TrackletId> left = Sets.difference(getTracklets(), overlap);
-		if ( left.isEmpty() ) {
-			return BinaryRelation.MERGEABLE;
+		Set<TrackletId> leftTrkIdDiffs = Sets.difference(getTracklets(), overlap);
+		Set<TrackletId> rightTrkIdDiffs = Sets.difference(other.getTracklets(), overlap);
+		
+		if ( leftTrkIdDiffs.isEmpty() && rightTrkIdDiffs.isEmpty() ) {
+			return BinaryRelation.SAME;
 		}
 		
-		Set<TrackletId> right = Sets.difference(other.getTracklets(), overlap);
-		if ( right.isEmpty() ) {
-			return BinaryRelation.MERGEABLE;
+		if ( rightTrkIdDiffs.isEmpty() ) {
+			return BinaryRelation.LEFT_SUBSUME;
 		}
 		
-		Set<String> leftNodes = Funcs.map(left, TrackletId::getNodeId);
-		boolean conflict = FStream.from(right).exists(rid -> leftNodes.contains(rid.getNodeId()));
-		return conflict ? BinaryRelation.CONFLICT : BinaryRelation.MERGEABLE;
+		if ( leftTrkIdDiffs.isEmpty() ) {
+			return BinaryRelation.RIGHT_SUBSUME;
+		}
+		
+		Set<String> leftNodeDiffs = Funcs.map(leftTrkIdDiffs, TrackletId::getNodeId);
+		Set<String> rightNodeDiffs = Funcs.map(rightTrkIdDiffs, TrackletId::getNodeId);
+		if ( Funcs.intersects(leftNodeDiffs, rightNodeDiffs) ) {
+			return BinaryRelation.CONFLICT;
+		}
+		else {
+			return BinaryRelation.MERGEABLE;
+		}
 	}
 	
 	/**
@@ -162,6 +218,10 @@ public interface Association extends Timestamped {
 	 */
 	public default boolean isMergeable(Association other) {
 		return relate(other) == BinaryRelation.MERGEABLE;
+	}
+	
+	public default Association merge(Association other) {
+		return null;
 	}
 	
 	/**
@@ -220,7 +280,15 @@ public interface Association extends Timestamped {
 	 * @return
 	 */
 	public default boolean isSuperior(Association other) {
-		switch ( relate(other )) {
+		switch ( relate(other) ) {
+			case SAME:
+				return getScore() > other.getScore();
+			case DISJOINT:
+				return false;
+			case LEFT_SUBSUME:
+				return true;
+			case RIGHT_SUBSUME:
+				return false;
 			case CONFLICT:
 				if ( size() < other.size() ) {
 					return false;
@@ -230,15 +298,21 @@ public interface Association extends Timestamped {
 				}
 			case MERGEABLE:
 				return isMoreSpecific(other);
-			case DISJOINT:
-				return false;
 			default:
 				throw new AssertionError();
 		}
 	}
 	
 	public default boolean isInferior(Association other) {
-		switch ( relate(other )) {
+		switch ( relate(other) ) {
+			case SAME:
+				return getScore() < other.getScore();
+			case DISJOINT:
+				return false;
+			case LEFT_SUBSUME:
+				return false;
+			case RIGHT_SUBSUME:
+				return true;
 			case CONFLICT:
 				if ( size() > other.size() ) {
 					return false;
@@ -248,8 +322,6 @@ public interface Association extends Timestamped {
 				}
 			case MERGEABLE:
 				return other.isMoreSpecific(this);
-			case DISJOINT:
-				return false;
 			default:
 				throw new AssertionError();
 		}
@@ -257,6 +329,10 @@ public interface Association extends Timestamped {
 	
 	public default boolean intersectsTracklet(Association assoc) {
 		return Funcs.intersects(getTracklets(), assoc.getTracklets());
+	}
+	
+	public default boolean intersectsTracklet(Collection<TrackletId> trkIds) {
+		return Funcs.intersects(getTracklets(), trkIds);
 	}
 	
 	public default boolean intersectsNode(Association assoc) {

@@ -1,5 +1,7 @@
 package jarvey.streams.model;
 
+import static utils.Utilities.checkArgument;
+
 import java.util.Collections;
 import java.util.List;
 
@@ -31,7 +33,7 @@ public final class GlobalTrack implements ObjectTrack {
 	public enum State {
 		ASSOCIATED("A"),
 		MERGED("M"),
-		UNASSOCIATED("U"),
+		ISOLATED("I"),
 		DELETED("D");
 		
 		private String m_code;
@@ -51,6 +53,8 @@ public final class GlobalTrack implements ObjectTrack {
 	
 	public static final GlobalTrack from(Association assoc, List<LocalTrack> supports,
 											@Nullable String overlapArea) {
+		checkArgument(assoc != null, "assoc is null");
+		
 		// supporting track들에서 평균 위치를 계산한다.
 		List<Point> pts = Funcs.map(supports, LocalTrack::getLocation);
 		Point avgPt = GeoUtils.average(pts);
@@ -60,69 +64,50 @@ public final class GlobalTrack implements ObjectTrack {
 								assoc.getFirstTimestamp(), ts);
 	}
 	
-	public static final GlobalTrack from(AssociationClosure.DAO assoc, List<LocalTrack> supports,
+	public static final GlobalTrack from(Association assoc, LocalTrack ltrack,
 											@Nullable String overlapArea) {
-		// supporting track들에서 평균 위치를 계산한다.
-		List<Point> pts = Funcs.map(supports, LocalTrack::getLocation);
-		Point avgPt = GeoUtils.average(pts);
-		long ts = Funcs.max(supports, LocalTrack::getTimestamp).getTimestamp();
+		checkArgument(assoc != null, "assoc is null");
 		
-		return new GlobalTrack(assoc.getId(), State.ASSOCIATED, overlapArea, avgPt, supports,
-								assoc.getFirstTimestamp(), ts);
-	}
-	
-	public static final GlobalTrack from(Association assoc, LocalTrack ltrack, @Nullable String overlapArea) {
-		return new GlobalTrack(assoc.getId(), State.ASSOCIATED, null, ltrack.getLocation(),
-								Collections.singletonList(ltrack), ltrack.getFirstTimestamp(),
-								ltrack.getTimestamp());
+		if ( ltrack.isDeleted() ) {
+			return new GlobalTrack(ltrack.getKey(), State.DELETED, overlapArea, null, null,
+									ltrack.getFirstTimestamp(), ltrack.getTimestamp());
+		}
+		else {
+			return new GlobalTrack(assoc.getId(), State.ASSOCIATED, overlapArea, ltrack.getLocation(),
+									Collections.singletonList(ltrack), ltrack.getFirstTimestamp(),
+									ltrack.getTimestamp());
+		}
 	}
 	
 	public static final GlobalTrack from(Iterable<LocalTrack> ltracks, String overlapArea) {
-		LocalTrack leader = Funcs.min(ltracks, LocalTrack::getFirstTimestamp);
-		
-		List<LocalTrack> supports = Funcs.removeIf(ltracks, LocalTrack::isDeleted);
-		if ( supports.isEmpty() ) {
-			return GlobalTrack.deleted(leader, overlapArea);
+		if ( Funcs.exists(ltracks, LocalTrack::isDeleted) ) {
+			throw new IllegalArgumentException("ltracks contains 'deleted' track.");
 		}
 		
+		LocalTrack leader = Funcs.min(ltracks, LocalTrack::getFirstTimestamp);
+		
 		// supporting track들에서 평균 위치를 계산한다.
-		List<Point> pts = Funcs.map(supports, LocalTrack::getLocation);
+		List<Point> pts = Funcs.map(ltracks, LocalTrack::getLocation);
 		Point avgPt = GeoUtils.average(pts);
 		
-		long ts = Funcs.max(supports, LocalTrack::getTimestamp).getTimestamp();
+		long ts = Funcs.max(ltracks, LocalTrack::getTimestamp).getTimestamp();
 		
-		return new GlobalTrack(leader.getKey(), State.ASSOCIATED, overlapArea, avgPt, supports,
+		return new GlobalTrack(leader.getKey(), State.ISOLATED, overlapArea, avgPt, null,
 								leader.getFirstTimestamp(), ts);
 	}
 	
 	public static final GlobalTrack from(LocalTrack ltrack, @Nullable String overlapArea) {
-		return new GlobalTrack(ltrack.getKey(), State.ASSOCIATED, overlapArea, ltrack.getLocation(),
-								null, ltrack.getFirstTimestamp(), ltrack.getTimestamp());
-	}
-
-	public static final GlobalTrack deleted(AssociationClosure assoc, LocalTrack ltrack,
-											@Nullable String overlapArea) {
-		return new GlobalTrack(assoc.getId(), State.DELETED, overlapArea, null,
-								Collections.singletonList(ltrack),
-								ltrack.getFirstTimestamp(), ltrack.getTimestamp());
-	}
-	public static final GlobalTrack deleted(AssociationClosure.DAO assoc, LocalTrack ltrack,
-											@Nullable String overlapArea) {
-		return new GlobalTrack(assoc.getId(), State.DELETED, overlapArea, null,
-								Collections.singletonList(ltrack),
-								ltrack.getFirstTimestamp(), ltrack.getTimestamp());
-	}
-	public static final GlobalTrack deleted(LocalTrack ltrack, @Nullable String overlapArea) {
-		return new GlobalTrack(ltrack.getKey(), State.DELETED, overlapArea, null, null,
-								ltrack.getFirstTimestamp(), ltrack.getTimestamp());
+		if ( ltrack.isDeleted() ) {
+			return new GlobalTrack(ltrack.getKey(), State.DELETED, overlapArea, null, null,
+									ltrack.getFirstTimestamp(), ltrack.getTimestamp());
+		}
+		else {
+			return new GlobalTrack(ltrack.getKey(), State.ISOLATED, overlapArea, ltrack.getLocation(),
+									null, ltrack.getFirstTimestamp(), ltrack.getTimestamp());
+		}
 	}
 	
-	public static final GlobalTrack merged(Association assoc, LocalTrack ltrack) {
-		return new GlobalTrack(ltrack.getKey(), State.MERGED, null, null, null,
-								ltrack.getFirstTimestamp(), ltrack.getTimestamp());
-	}
-	
-	private GlobalTrack(String id, State state, String overlapArea, Point loc, List<LocalTrack> ltracks,
+	public GlobalTrack(String id, State state, String overlapArea, Point loc, List<LocalTrack> ltracks,
 						long firstTs, long ts) {
 		m_id = id;
 		m_state = state;
@@ -169,22 +154,20 @@ public final class GlobalTrack implements ObjectTrack {
 	@Override
 	public String toString() {
 		String area = m_overlapArea != null ? String.format("@%s", m_overlapArea) : "";
-		if ( m_location == null ) {	// deleted track
-			return String.format("%s:deleted#%d", getKey(), getTimestamp());
+		
+		String locStr = m_location != null ? GeoUtils.toString(m_location, 1) : "";
+		String supportsStr = "";
+		if ( m_supports != null ) {
+			TrackletId leaderId = TrackletId.fromString(m_id);
+			List<TrackletId> trkIds = FStream.from(m_supports)
+												.map(LocalTrack::getTrackletId)
+												.sort()
+												.toList();
+			supportsStr = String.format(" {%s}", AssociationClosure.toString(leaderId, trkIds));
 		}
 		
-		String locStr = m_location != null ? GeoUtils.toString(m_location, 1) : "none";
-		if ( m_supports != null ) {
-			String supportStr = FStream.from(m_supports)
-										.map(LocalTrack::getTrackletId)
-										.sort()
-										.map(TrackletId::toString)
-										.join('-');
-			return String.format("%s%s#%d {%s} (%d)",
-									getKey(), area, m_ts, supportStr, m_firstTs);
-		}
-		else {
-			return String.format("%s%s#%d {%s} (%d)", getKey(), area, m_ts, locStr, m_firstTs);
-		}
+		return String.format("%s%s %s %s#%d%s (%d)",
+							getKey(), area, m_state.toString().substring(0,1),
+							locStr, m_ts, supportsStr, m_firstTs);
 	}
 }

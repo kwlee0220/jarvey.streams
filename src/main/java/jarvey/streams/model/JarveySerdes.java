@@ -4,6 +4,7 @@ import org.apache.kafka.common.serialization.Serde;
 
 import jarvey.streams.node.NodeTrack;
 import jarvey.streams.node.NodeTrackletIndex;
+import jarvey.streams.node.TrackFeature;
 import jarvey.streams.serialization.json.GsonUtils;
 
 /**
@@ -17,8 +18,8 @@ public class JarveySerdes {
 														= GsonUtils.getSerde(NodeTrackletIndex.class);
 	private static final Serde<BinaryAssociation> s_binaryAssociationSerde
 															= GsonUtils.getSerde(BinaryAssociation.class);
-	private static final Serde<AssociationClosure.DAO> s_associationClosureSerde
-														= GsonUtils.getSerde(AssociationClosure.DAO.class);
+	private static final Serde<AssociationClosure> s_associationClosureSerde
+														= GsonUtils.getSerde(AssociationClosure.class);
 	private static final Serde<GlobalTrack> s_globalTrackSerde = GsonUtils.getSerde(GlobalTrack.class);
 	
 	public static Serde<TrackletId> TrackletId() {
@@ -37,11 +38,15 @@ public class JarveySerdes {
 		return s_binaryAssociationSerde;
 	}
 	
-	public static Serde<AssociationClosure.DAO> AssociationClosure() {
+	public static Serde<AssociationClosure> AssociationClosure() {
 		return s_associationClosureSerde;
 	}
 	
 	public static Serde<GlobalTrack> GlobalTrack() {
 		return s_globalTrackSerde;
+	}
+	
+	public static Serde<TrackFeature> TrackFeature() {
+		return TrackFeatureSerde.s_serde;
 	}
 }

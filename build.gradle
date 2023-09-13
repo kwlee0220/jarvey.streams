@@ -1,6 +1,7 @@
 apply plugin: 'java-library'
 apply plugin: 'maven-publish'
 apply plugin: 'com.github.johnrengelman.shadow'
+apply plugin: 'com.google.protobuf'
 //apply plugin: 'com.commercehub.gradle.plugin.avro'
 
 group = 'etri'
@@ -19,18 +20,41 @@ buildscript {
 	}
 	dependencies {
 		classpath 'com.github.jengelman.gradle.plugins:shadow:4.0.4'
+		classpath 'com.google.protobuf:protobuf-gradle-plugin:0.9.3'
 //		classpath 'com.netflix.nebula:gradle-aggregate-javadocs-plugin:2.2.+'
 //		classpath 'com.commercehub.gradle.plugin:gradle-avro-plugin:0.9.1'
 	}
 }
 
-// sourceSets {
-//	main {
-//		java {
-//			srcDirs 'build/generated-main-avro-java'
-//		}
-//	}
-//}
+protobuf {
+    protoc {
+        artifact = "com.google.protobuf:protoc:3.23.2"
+    }
+    plugins {
+        grpc {
+            artifact = 'io.grpc:protoc-gen-grpc-java:1.54.1'
+        }
+    }
+    generateProtoTasks {
+        all()*.plugins {
+            grpc {}
+        }
+    }
+}
+
+sourceSets {
+	main {
+		java {
+			srcDirs 'build/generated/source/proto/main/grpc'
+			srcDirs 'build/generated/source/proto/main/java'
+			srcDirs 'build/generated/source/proto/test/grpc'
+			srcDirs 'build/generated/source/proto/test/java'
+		}
+		proto {
+			srcDirs 'src/main/proto'
+		}
+	}
+}
 
 repositories {
 	mavenLocal()
@@ -53,6 +77,9 @@ ext {
 	
 	kafka_streams_version = '2.7.0'
 	avro_version = '1.10.1'
+	
+	protobuf_java_version='3.24.1'
+	kafka_protobuf_serde_version= '2.2.0'
 	
 	postgresql_version = '42.3.3'
 	javalin_version = '4.6.3'
@@ -88,6 +115,9 @@ dependencies {
 	// for remote state store access
 	implementation "io.javalin:javalin:${javalin_version}"
 	implementation "com.squareup.okhttp3:okhttp:${okhttp_version}"
+
+	implementation "com.google.protobuf:protobuf-java:${protobuf_java_version}"
+	implementation "com.github.daniel-shuy:kafka-protobuf-serde:${kafka_protobuf_serde_version}"
 	
 	testImplementation group: 'junit', name: 'junit', version: '4.12'
 }
@@ -168,6 +198,9 @@ eclipse {
 				cp.entries.each { entry ->
 					if ( entry.kind == 'src' && entry.hasProperty('output') ) {
 						if ( entry.path.startsWith("src/test/") ) {
+							entry.output = 'test_classes'
+						}
+						else if ( entry.path.startsWith("build/generated/source/proto/test/") ) {
 							entry.output = 'test_classes'
 						}
 						else {

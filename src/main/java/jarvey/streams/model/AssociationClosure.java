@@ -1,5 +1,7 @@
 package jarvey.streams.model;
 
+import static utils.Utilities.checkArgument;
+
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -22,12 +24,12 @@ import utils.stream.FStream;
  * @author Kang-Woo Lee (ETRI)
  */
 public class AssociationClosure implements Association, Iterable<BinaryAssociation> {
-	private final String m_id;
-	private final Set<TrackletId> m_trackletIds;
-	private final List<BinaryAssociation> m_supports;
-	private double m_score;
-	private long m_firstTs;
-	private long m_ts;
+	@SerializedName("id") private final String m_id;
+	@SerializedName("tracklets") private final Set<TrackletId> m_trackletIds;
+	@SerializedName("supports") private final List<BinaryAssociation> m_supports;
+	@SerializedName("score") private double m_score;
+	@SerializedName("first_ts") private long m_firstTs;
+	@SerializedName("ts") private long m_ts;
 	
 	public static AssociationClosure from(Iterable<BinaryAssociation> supports) {
 		return new AssociationClosure(supports);
@@ -53,9 +55,13 @@ public class AssociationClosure implements Association, Iterable<BinaryAssociati
 				minTs = ba.getFirstTimestamp();
 				leader = ba;
 			}
+			else if ( ba.getFirstTimestamp() == minTs && leader.getId().compareTo(ba.getId()) > 0 ) {
+				minTs = ba.getFirstTimestamp();
+				leader = ba;
+			}
 
-			m_trackletIds.add(ba.getLeftTrackId());
-			m_trackletIds.add(ba.getRightTrackId());
+			m_trackletIds.add(ba.getLeftTrackletId());
+			m_trackletIds.add(ba.getRightTrackletId());
 			++count;
 		}
 		
@@ -163,7 +169,7 @@ public class AssociationClosure implements Association, Iterable<BinaryAssociati
 		}
 	}
 	
-	public Expansion expand(BinaryAssociation assoc, boolean allowAlternative) {
+	public Expansion _expand(BinaryAssociation assoc, boolean allowConflict) {
 		Set<TrackletId> trackOverlap = Sets.intersection(getTracklets(), assoc.getTracklets());
 		if ( trackOverlap.size() == 2 ) {
 			// closure에 assoc을 구성하는 두 tracklet-id를 모두 포함한 경우.
@@ -199,7 +205,7 @@ public class AssociationClosure implements Association, Iterable<BinaryAssociati
 															ba -> ba.getNodes().contains(other.getNodeId()));
 			if ( conflict != null ) {
 				// conflict가 유발되는 경우
-				if ( allowAlternative ) {
+				if ( allowConflict ) {
 					List<BinaryAssociation> newSupports = Lists.newArrayList(m_supports);
 					Funcs.removeIf(newSupports, ba -> ba.getNodes().contains(other.getNodeId()));
 					newSupports.add(assoc);
@@ -237,6 +243,53 @@ public class AssociationClosure implements Association, Iterable<BinaryAssociati
 		}
 		else {
 			return this;
+		}
+	}
+	
+	@Override
+	public AssociationClosure merge(Association other) {
+		checkArgument(other instanceof AssociationClosure, ""+other);
+		
+		Set<TrackletId> leftDiff = Sets.difference(getTracklets(), other.getTracklets());
+		Set<TrackletId> rightDiff = Sets.difference(other.getTracklets(), getTracklets());
+		
+		Set<String> leftNodes = Funcs.map(leftDiff, TrackletId::getNodeId);
+		Set<String> rightNodes = Funcs.map(rightDiff, TrackletId::getNodeId);
+		if ( Funcs.intersects(leftNodes, rightNodes) ) {
+			return null;
+		}
+		
+		Set<BinaryAssociation> mergeds = Sets.newHashSet();
+		mergeds.addAll(getSupports());
+		mergeds.addAll(((AssociationClosure)other).getSupports());
+		return AssociationClosure.from(mergeds);
+	}
+	
+	public AssociationClosure resolveConflict(Association conflict) {
+		List<BinaryAssociation> newSupports
+			= Funcs.filter(m_supports, ba -> !Collections.disjoint(ba.getTracklets(), conflict.getTracklets()));
+		if ( newSupports.size() >= 2 ) {
+			return AssociationClosure.from(newSupports);
+		}
+		else {
+			return null;
+		}
+	}
+	
+	public AssociationClosure mergeWithoutConflicts(AssociationClosure conflict, boolean ignoreIdentity) {
+		Set<TrackletId> leftDiffs = Sets.difference(conflict.getTracklets(), getTracklets());
+		Set<TrackletId> conflictingTrkIds = Funcs.filter(leftDiffs, tid -> containsNode(tid.getNodeId()));
+		
+		BinaryAssociationCollection supports = new BinaryAssociationCollection(false); 
+		FStream.from(conflict.getSupports())
+				.filter(ba -> !ba.intersectsTracklet(conflictingTrkIds))
+				.forEach(supports::add);
+		if ( supports.size() == 0 && ignoreIdentity ) {
+			return null;
+		}
+		else {
+			m_supports.forEach(supports::add);
+			return AssociationClosure.from(supports);
 		}
 	}
 	
@@ -310,8 +363,17 @@ public class AssociationClosure implements Association, Iterable<BinaryAssociati
 					.toList();
 	}
 	
-	public static String toString(List<TrackletId> trkIds) {
-		return FStream.from(trkIds).join('-');
+	public static String toString(TrackletId leaderId, List<TrackletId> trkIds) {
+		return FStream.from(trkIds)
+						.map(trkId -> {
+							if ( trkId.equals(leaderId) ) {
+								return String.format("%s[*%s]", trkId.getNodeId(), trkId.getTrackId());
+							}
+							else {
+								return trkId.toString();
+							}
+						})
+						.join('-');
 	}
 	
 	public static class DAO implements Timestamped {

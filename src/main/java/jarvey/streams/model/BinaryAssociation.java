@@ -28,6 +28,34 @@ public final class BinaryAssociation implements Association {
 		}
 	}
 	
+	public BinaryAssociation(TrackletId leftTrkId, long leftFirstTs, long leftTs,
+							TrackletId rightTrkId, long rightFirstTs, long rightTs, double score) {
+		if ( leftTrkId.compareTo(rightTrkId) < 0 ) {
+			m_left = new TimedTracklet(leftTrkId, leftTs);
+			m_right = new TimedTracklet(rightTrkId, rightTs);
+			
+			m_id = leftTrkId.toString();
+			m_firstTs = leftFirstTs;
+		}
+		else {
+			m_right = new TimedTracklet(leftTrkId, leftTs);
+			m_left = new TimedTracklet(rightTrkId, rightTs);
+			
+			m_id = rightTrkId.toString();
+			m_firstTs = rightFirstTs;
+		}
+		
+		if ( leftFirstTs < rightFirstTs ) {
+			m_id = leftTrkId.toString();
+			m_firstTs = leftFirstTs;
+		}
+		else if ( leftFirstTs > rightFirstTs ) {
+			m_id = rightTrkId.toString();
+			m_firstTs = rightFirstTs;
+		}
+		m_score = score;
+	}
+	
 	public BinaryAssociation(String id, TrackletId left, TrackletId right, double score,
 								long leftTs, long rightTs, long firstTs) {
 		m_id = id;
@@ -48,17 +76,30 @@ public final class BinaryAssociation implements Association {
 	public String getId() {
 		return m_id;
 	}
+	
+	public TrackletId getLeader() {
+		return TrackletId.fromString(m_id);
+	}
+	
+	public TrackletId getFollower() {
+		if ( m_left.m_tracklet.toString().equals(m_id) ) {
+			return m_right.m_tracklet;
+		}
+		else {
+			return m_left.m_tracklet;
+		}
+	}
 
 	@Override
 	public Set<TrackletId> getTracklets() {
 		return Sets.newHashSet(m_left.m_tracklet, m_right.m_tracklet);
 	}
 	
-	public TrackletId getLeftTrackId() {
+	public TrackletId getLeftTrackletId() {
 		return m_left.m_tracklet;
 	}
 	
-	public TrackletId getRightTrackId() {
+	public TrackletId getRightTrackletId() {
 		return m_right.m_tracklet;
 	}
 	
@@ -75,7 +116,7 @@ public final class BinaryAssociation implements Association {
 	}
 	
 	public TrackletId getOther(TrackletId trkId) {
-		return trkId.equals(getLeftTrackId()) ? getRightTrackId() : getLeftTrackId();
+		return trkId.equals(getLeftTrackletId()) ? getRightTrackletId() : getLeftTrackletId();
 	}
 
 	@Override
@@ -102,23 +143,40 @@ public final class BinaryAssociation implements Association {
 	}
 
 	public boolean match(BinaryAssociation other) {
-		return Objects.equals(getLeftTrackId(), other.getLeftTrackId())
-				&& Objects.equals(getRightTrackId(), other.getRightTrackId());
+		return Objects.equals(getLeftTrackletId(), other.getLeftTrackletId())
+				&& Objects.equals(getRightTrackletId(), other.getRightTrackletId());
 	}
 	
 	@Override
 	public BinaryAssociation removeTracklet(TrackletId trkId) {
-		if ( getLeftTrackId().equals(trkId) || getRightTrackId().equals(trkId) ) {
+		if ( getLeftTrackletId().equals(trkId) || getRightTrackletId().equals(trkId) ) {
 			return null;
 		}
 		else {
 			return this;
 		}
+	} 
+	
+	@Override
+	public String toString() {
+		TrackletId trkId = TrackletId.fromString(m_id);
+		if ( getLeftTrackletId().equals(trkId) ) {
+			TrackletId leader = getLeftTrackletId();
+			return String.format("%s[*%s]-%s:%.2f#%d",
+								leader.getNodeId(), leader.getTrackId(), getRightTrackletId(),
+								m_score, getTimestamp());
+		}
+		else {
+			TrackletId leader = getRightTrackletId();
+			return String.format("%s-%s[*%s]:%.2f#%d",
+								getLeftTrackletId(), leader.getNodeId(), leader.getTrackId(),
+								m_score, getTimestamp());
+		}
 	}
 	
 	@Override
 	public int hashCode() {
-		return Objects.hash(getLeftTrackId(), getRightTrackId(), m_score, getLeftTimestamp(), getRightTimestamp());
+		return Objects.hash(getLeftTrackletId(), getRightTrackletId(), m_score, getLeftTimestamp(), getRightTimestamp());
 	}
 	
 	@Override
@@ -132,16 +190,10 @@ public final class BinaryAssociation implements Association {
 		
 		BinaryAssociation other = (BinaryAssociation)obj;
 		
-		return getLeftTrackId().equals(other.getLeftTrackId())
-				&& getRightTrackId().equals(other.getRightTrackId())
+		return getLeftTrackletId().equals(other.getLeftTrackletId())
+				&& getRightTrackletId().equals(other.getRightTrackletId())
 				&& Double.compare(m_score, other.m_score) == 0
 				&& getLeftTimestamp() == other.getLeftTimestamp()
 				&& getRightTimestamp() == other.getRightTimestamp();
-	}
-	
-	@Override
-	public String toString() {
-		return String.format("%s-%s:%.2f#%d",
-							getLeftTrackId(), getRightTrackId(), m_score, getTimestamp());
 	}
 }

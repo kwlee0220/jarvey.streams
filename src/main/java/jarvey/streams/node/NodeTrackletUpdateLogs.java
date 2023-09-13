@@ -154,18 +154,19 @@ public class NodeTrackletUpdateLogs {
 		String node = rs.getString(1);
 		String trackId = rs.getString(2);
 		
-		String zoneSeq = rs.getString(5);
-		String overlapArea = rs.getString(6);
-		String assoc = rs.getString(7);
+		String enterZone = rs.getString(3);
+		String exitZone = rs.getString(4);
+		String overlapArea = rs.getString(5);
+		String assoc = rs.getString(6);
 
-		long minTs = rs.getLong(8);
-		Long maxTs = (rs.getLong(9) != -1) ? rs.getLong(9) : null;
-		int partNo = rs.getInt(10);
-		long minOffset = rs.getLong(11);
-		Long maxOffset = (rs.getLong(12) != -1) ? rs.getLong(12) : null;
-		int count = rs.getInt(13);
+		long minTs = rs.getLong(7);
+		Long maxTs = (rs.getLong(8) != -1) ? rs.getLong(8) : null;
+		int partNo = rs.getInt(9);
+		long minOffset = rs.getLong(10);
+		Long maxOffset = (rs.getLong(11) != -1) ? rs.getLong(11) : null;
+		int count = rs.getInt(12);
 		
-		NodeTrackletIndex index = new NodeTrackletIndex(node, trackId, zoneSeq,
+		NodeTrackletIndex index = new NodeTrackletIndex(node, trackId, enterZone, exitZone,
 														Range.between(minTs, maxTs),
 														partNo,
 														Range.between(minOffset, maxOffset),
@@ -181,15 +182,14 @@ public class NodeTrackletUpdateLogs {
 		+ 	"track_id varchar not null, "	// 2
 		+ 	"enter_zone varchar, "			// 3
 		+ 	"exit_zone varchar, "			// 4
-		+ 	"zone_sequence varchar, "		// 5
-		+ 	"overlap_area varchar, "		// 6
-		+ 	"association varchar, "			// 7
-		+ 	"first_ts bigint not null, "	// 8
-		+ 	"last_ts bigint not null, "		// 9
-		+ 	"partition integer not null, "		// 10
-		+ 	"first_offset bigint not null, "	// 11
-		+ 	"last_offset bigint not null, "	// 12
-		+ 	"count integer not null, "		// 13
+		+ 	"overlap_area varchar, "		// 5
+		+ 	"association varchar, "			// 6
+		+ 	"first_ts bigint not null, "	// 7
+		+ 	"last_ts bigint not null, "		// 8
+		+ 	"partition integer not null, "		// 9
+		+ 	"first_offset bigint not null, "	// 10
+		+ 	"last_offset bigint not null, "	// 11
+		+ 	"count integer not null, "		// 12
 		+ 	"primary key (node, track_id)"
 		+ ")";
 	

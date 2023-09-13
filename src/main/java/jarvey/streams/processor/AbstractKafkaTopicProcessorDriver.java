@@ -24,6 +24,7 @@ import utils.func.CheckedRunnable;
 import utils.func.Funcs;
 import utils.func.Unchecked;
 
+import jarvey.streams.KafkaAdmins;
 import jarvey.streams.KafkaParameters;
 
 import picocli.CommandLine.Mixin;
@@ -41,6 +42,7 @@ public abstract class AbstractKafkaTopicProcessorDriver<K,V>
 	@Mixin protected KafkaParameters m_kafkaParams;
 	private boolean m_stopOnPollTimeout = false;
 	private boolean m_updateOffset = true;
+	private boolean m_cleanUpConsumerGroup = true;
 	
 	private final Map<TopicPartition,KafkaTopicPartitionProcessor<K,V>> m_processors = Maps.newHashMap();
 	private final Map<TopicPartition,OffsetAndMetadata> m_offsets = Maps.newHashMap();
@@ -88,6 +90,14 @@ public abstract class AbstractKafkaTopicProcessorDriver<K,V>
 
 	@Override
 	public void run() throws Throwable {
+		if ( m_cleanUpConsumerGroup ) {
+			try {
+				KafkaAdmins admin = new KafkaAdmins(m_kafkaParams.getBootstrapServers());
+				admin.deleteConsumerGroup(m_kafkaParams.getApplicationId());
+			}
+			catch ( Exception ignored ) { }
+		}
+		
 		try ( KafkaConsumer<K,V> consumer = openKafkaConsumer() ) {
 			m_consumer = consumer;
 			

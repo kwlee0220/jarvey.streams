@@ -1,8 +1,11 @@
 package jarvey.streams.model;
 
+import java.util.List;
 import java.util.Objects;
 
 import com.google.gson.annotations.SerializedName;
+
+import utils.CSV;
 
 /**
  * 
@@ -65,5 +68,11 @@ public final class TrackletId implements Comparable<TrackletId> {
 		String trackId = str.substring(idx+1, str.lastIndexOf(']'));
 		
 		return new TrackletId(nodeId, trackId);
+	}
+	
+	public static List<TrackletId> parseAssociation(String str) {
+		return CSV.parseCsv(str, '-')
+					.map(TrackletId::fromString)
+					.toList();
 	}
 }

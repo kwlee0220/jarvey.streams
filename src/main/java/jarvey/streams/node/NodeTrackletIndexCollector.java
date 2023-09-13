@@ -89,12 +89,14 @@ public class NodeTrackletIndexCollector implements ValueTransformer<NodeTrack,
 			m_store.put(key, index);
 		}
 		else {
-			index.incrementCount();
+			if ( index.update(track) ) {
+				updateEnterZone(index);
+			}
 			m_store.put(key, index);
 		}
 
 		if ( track.isLastUpdate() ) {
-			index.setLastUpdate(track.getZoneSequence(), track.getTimestamp(), m_context.offset());
+			index.setLastUpdate(track.getTimestamp(), m_context.offset());
 			updateIndex(index);
 			
 			m_store.delete(key);
@@ -201,32 +203,41 @@ public class NodeTrackletIndexCollector implements ValueTransformer<NodeTrack,
 		}
 	}
 	
+	private static final String SQL_UPDATE_ENTER_ZONE
+			= "update %s set enter_zone=?, count=? where node=? and track_id=?";
+	private void updateEnterZone(NodeTrackletIndex index) {
+		String sqlStr = String.format(SQL_UPDATE_ENTER_ZONE, m_tableName);
+		try ( Connection conn = m_jdbc.connect() ) {
+			try ( PreparedStatement pstmt = conn.prepareStatement(sqlStr) ) {
+				pstmt.setString(1, index.getEnterZone());
+				pstmt.setInt(2, index.getUpdateCount());
+				pstmt.setString(3, index.getNodeId());
+				pstmt.setString(4, index.getTrackId());
+				
+				pstmt.execute();
+			}
+		}
+		catch ( SQLException e ) {
+			throw new RuntimeException(e);
+		}
+	}
+	
 	private static final String SQL_UPDATE_INDEX
-			= "update %s set enter_zone=?, exit_zone=?, zone_sequence=?, overlap_area=?, association=?, "
+			= "update %s set enter_zone=?, exit_zone=?, overlap_area=?, association=?, "
 			+ "last_ts=?, last_offset=?, count=? where node=? and track_id=?";
 	private void updateIndex(NodeTrackletIndex index) {
-		String zoneSeq = index.getZoneSequence();
-		String enterZone = null;
-		String exitZone = null;
-		if ( zoneSeq != null ) {
-			int len = zoneSeq.length();
-			enterZone = zoneSeq.substring(1, 2);
-			exitZone = zoneSeq.substring(len-2, len-1);
-		}
-		
 		String sqlStr = String.format(SQL_UPDATE_INDEX, m_tableName);
 		try ( Connection conn = m_jdbc.connect() ) {
 			try ( PreparedStatement pstmt = conn.prepareStatement(sqlStr) ) {
-				pstmt.setString(1, enterZone);
-				pstmt.setString(2, exitZone);
-				pstmt.setString(3, index.getZoneSequence());
-				pstmt.setString(4, index.getOverlapAreaId());
-				pstmt.setString(5, index.getAssociation());
-				pstmt.setLong(6, index.getTimestampRange().max());
-				pstmt.setLong(7, index.getTopicOffsetRange().max());
-				pstmt.setInt(8, index.getUpdateCount());
-				pstmt.setString(9, index.getNodeId());
-				pstmt.setString(10, index.getTrackId());
+				pstmt.setString(1, index.getEnterZone());
+				pstmt.setString(2, index.getExitZone());
+				pstmt.setString(3, index.getOverlapAreaId());
+				pstmt.setString(4, index.getAssociation());
+				pstmt.setLong(5, index.getTimestampRange().max());
+				pstmt.setLong(6, index.getTopicOffsetRange().max());
+				pstmt.setInt(7, index.getUpdateCount());
+				pstmt.setString(8, index.getNodeId());
+				pstmt.setString(9, index.getTrackId());
 				
 				pstmt.execute();
 			}

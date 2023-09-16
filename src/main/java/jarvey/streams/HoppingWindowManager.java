@@ -44,11 +44,19 @@ public class HoppingWindowManager {
 		return this;
 	}
 	
+	public Duration getWindowSize() {
+		return Duration.ofMillis(m_windowSize);
+	}
+	
 	public HoppingWindowManager advanceTime(Duration dur) {
 		Utilities.checkArgument(dur.toMillis() > 0,
 								() -> String.format("invalid advance size: %s", dur));
 		m_advanceTime = dur.toMillis();
 		return this;
+	}
+	
+	public Duration advanceTime() {
+		return Duration.ofMillis(m_advanceTime);
 	}
 	
 	public HoppingWindowManager graceTime(Duration dur) {
@@ -57,6 +65,10 @@ public class HoppingWindowManager {
 		
 		m_graceTime = dur.toMillis();
 		return this;
+	}
+	
+	public Duration graceTime() {
+		return Duration.ofMillis(m_graceTime);
 	}
 	
 	public long getLastTimestamp() {

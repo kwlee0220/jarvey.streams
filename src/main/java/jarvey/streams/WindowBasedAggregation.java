@@ -40,6 +40,10 @@ public class WindowBasedAggregation<T extends Timestamped, A extends Aggregator<
 		return results;
 	}
 	
+	public HoppingWindowManager getWindowManager() {
+		return m_windowMgr;
+	}
+	
 	public List<Windowed<R>> collect(T event) {
 		Tuple<List<Window>, List<Window>> tup = m_windowMgr.collect(event.getTimestamp());
 		List<Window> expireds = tup._1;

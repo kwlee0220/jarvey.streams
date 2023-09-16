@@ -220,10 +220,6 @@ public interface Association extends Timestamped {
 		return relate(other) == BinaryRelation.MERGEABLE;
 	}
 	
-	public default Association merge(Association other) {
-		return null;
-	}
-	
 	/**
 	 * 두 association이 서로 disjoint 여부를 반환한다.
 	 * 두 association 사이의 동일 tracklet를 포함하지 않는 경우를 disjoint라고 정의함.

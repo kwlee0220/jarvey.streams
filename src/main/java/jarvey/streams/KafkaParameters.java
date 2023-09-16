@@ -80,7 +80,7 @@ public class KafkaParameters {
 	}
 	@Option(names={"--poll-timeout"}, paramLabel="duration", description="default: '3s'")
 	public void setPollTimeout(String durStr) {
-		m_pollTimeout = Duration.ofMillis(UnitUtils.parseDuration(durStr));
+		m_pollTimeout = Duration.ofMillis(UnitUtils.parseDurationMillis(durStr));
 	}
 
 	public Duration getInitialPollTimeout() {
@@ -88,7 +88,7 @@ public class KafkaParameters {
 	}
 	@Option(names={"--initial-poll-timeout"}, paramLabel="duration", description="default: '10s'")
 	public void setInitialPollTimeout(String durStr) {
-		m_initialPollTimeout = Duration.ofMillis(UnitUtils.parseDuration(durStr));
+		m_initialPollTimeout = Duration.ofMillis(UnitUtils.parseDurationMillis(durStr));
 	}
 
 	public String getKeySerde() {
@@ -162,7 +162,7 @@ public class KafkaParameters {
 	
 	@Option(names={"--max.poll.interval"}, paramLabel="interval")
 	public void setMaxPollInterval(String intvlStr) {
-		m_maxPollIntervalMs = UnitUtils.parseDuration(intvlStr);
+		m_maxPollIntervalMs = UnitUtils.parseDurationMillis(intvlStr);
 	}
 
 	public int getMaxPollRecords() {

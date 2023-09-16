@@ -1,5 +1,6 @@
-package jarvey.streams.model;
+package jarvey.streams;
 
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -9,6 +10,9 @@ import com.google.common.collect.Lists;
 import utils.Indexed;
 import utils.func.Funcs;
 import utils.stream.FStream;
+
+import jarvey.streams.model.BinaryAssociation;
+import jarvey.streams.model.TrackletId;
 
 
 /**
@@ -86,8 +90,8 @@ public class BinaryAssociationCollection implements Iterable<BinaryAssociation> 
 	 * @param key	tracklet id 집합
 	 * @return	제거된 association 객체. 해당 키의 association 존재하지 않은 경우는 {@code null}.
 	 */
-	public BinaryAssociation remove(Set<TrackletId> key) {
-		return Funcs.removeFirstIf(m_associations, a -> a.match(key));
+	public List<BinaryAssociation> removeAll(Collection<TrackletId> key) {
+		return Funcs.removeIf(m_associations, ba -> ba.intersectsTracklet(key));
 	}
 	
 	public boolean add(BinaryAssociation assoc) {

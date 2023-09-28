@@ -18,8 +18,8 @@ import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
 
+import jarvey.streams.model.ZoneRelation;
 import jarvey.streams.node.NodeTrack;
-import jarvey.streams.zone.ZoneLineRelation;
 
 /**
  * 
@@ -35,7 +35,7 @@ public class GsonUtils {
 		s_adaptors.put(Point.class, new PointAdapter());
 		s_adaptors.put(Envelope.class, new EnvelopeAdater());
 		s_adaptors.put(LineSegment.class, new LineSegmentAdapter());
-		s_adaptors.put(ZoneLineRelation.class, new ZoneLineRelationAdapter());
+		s_adaptors.put(ZoneRelation.class, new ZoneRelationAdapter());
 		s_adaptors.put(NodeTrack.State.class, new NodeTrackStateAdapter());
 	}
 	

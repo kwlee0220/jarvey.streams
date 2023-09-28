@@ -3,7 +3,6 @@ package jarvey.streams.node;
 import java.time.Duration;
 import java.util.Properties;
 
-import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StreamsBuilder;
@@ -60,7 +59,6 @@ public final class NodeTrackletIndexCreator implements Runnable {
 	@Option(names={"--use-mock-store"}, description="Use mocking state store (for test).")
 	private boolean m_useMockStateStore = false;
 	
-	private Serde m_keyedUpdateSerde;
 	private JdbcProcessor m_jdbc;
 
 	@Option(names={"--input"}, paramLabel="topic-name", description="input topic name")
@@ -81,7 +79,7 @@ public final class NodeTrackletIndexCreator implements Runnable {
 	}
 	
 	public NodeTrackletIndexCreator setApplicationId(String id) {
-		m_kafkaParams.setApplicationId(id);
+		m_kafkaParams.setClientId(id);
 		return this;
 	}
 	
@@ -98,7 +96,7 @@ public final class NodeTrackletIndexCreator implements Runnable {
 		
 		if ( s_logger.isInfoEnabled() ) {
 			s_logger.info("use Kafka servers: {}", m_kafkaParams.getBootstrapServers());
-			s_logger.info("use Kafka application: {}", m_kafkaParams.getApplicationId());
+			s_logger.info("use Kafka application: {}", m_kafkaParams.getClientId());
 		}
 		
 		Properties props = m_kafkaParams.toStreamProperties();

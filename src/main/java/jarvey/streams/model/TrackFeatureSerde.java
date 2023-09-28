@@ -12,6 +12,7 @@ import jarvey.streams.node.TrackFeature;
 
 import dna.node.proto.TrackFeatureProto;
 
+
 /**
  *
  * @author Kang-Woo Lee (ETRI)
@@ -38,13 +39,15 @@ public class TrackFeatureSerde implements Serde<TrackFeature> {
 	private static class TrackFeatureSerializer implements Serializer<TrackFeature> {
 		@Override
 		public byte[] serialize(String topic, TrackFeature feature) {
-			TrackFeatureProto proto = TrackFeatureProto.newBuilder()
-														.setNodeId(feature.getNodeId())
-														.setTrackId(feature.getTrackId())
-														.addAllFeature(Floats.asList(feature.getFeature()))
-														.setFrameIndex(feature.getFrameIndex())
-														.setTs(feature.getTimestamp())
-														.build();
+			TrackFeatureProto.Builder builder = TrackFeatureProto.newBuilder()
+																.setNodeId(feature.getNodeId())
+																.setTrackId(feature.getTrackId())
+																.setFrameIndex(feature.getFrameIndex())
+																.setTs(feature.getTimestamp());
+			if ( feature != null ) {
+				builder.addAllFeature(Floats.asList(feature.getFeature()));
+			}
+			TrackFeatureProto proto = builder.build();
 			return s_protoSerializer.serialize(topic, proto);
 		}
 	}
@@ -54,8 +57,8 @@ public class TrackFeatureSerde implements Serde<TrackFeature> {
 		public TrackFeature deserialize(String topic, byte[] data) {
 			TrackFeatureProto proto = s_protoDeserializer.deserialize(topic, data);
 			
-			return new TrackFeature(proto.getNodeId(), proto.getTrackId(),
-										Floats.toArray(proto.getFeatureList()), proto.getZoneRelation(),
+			float[] feature = proto.getFeatureCount() > 0 ? Floats.toArray(proto.getFeatureList()) : null;
+			return new TrackFeature(proto.getNodeId(), proto.getTrackId(), feature,
 										proto.getFrameIndex(), proto.getTs());
 		}
 	}

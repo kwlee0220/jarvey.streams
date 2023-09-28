@@ -1,0 +1,56 @@
+---
+"etri:02":
+   A:
+      incoming_node: "etri:05"
+      exit_zone: B
+      transition_time: [1s, 4s]
+   B:
+      incoming_node: "etri:08"
+      exit_zone: A
+      transition_time: [2s, 6s]
+   B:
+      incoming_node: "etri:10"
+      exit_zone: A
+      transition_time: [2s, 6s]
+
+"etri:04":
+   A:
+      incoming_node: "etri:05"
+      exit_zone: C
+      transition_time: [1s, 4s]
+      
+"etri:05":
+   A:
+      incoming_node: "etri:07"
+      exit_zone: A
+      transition_time: [1s, 4s]
+   B:
+      incoming_node: "etri:02"
+      exit_zone: A
+      transition_time: [1s, 4s]
+   C:
+      incoming_node: "etri:04"
+      exit_zone: A
+      transition_time: [1s, 4s]
+      
+"etri:07":
+   A:
+      incoming_node: "etri:05"
+      exit_zone: A
+      transition_time: [1s, 4s]
+      
+"etri:08":
+   B:
+      incoming_node: "etri:02"
+      exit_zone: A
+      transition_time: [4s, 8s]
+      
+"etri:10":
+   A:
+      incoming_node: "etri:02"
+      exit_zone: B
+      transition_time: [2s, 6s]
+   A:
+      incoming_node: "etri:08"
+      exit_zone: A
+      transition_time: [3s, 7s]

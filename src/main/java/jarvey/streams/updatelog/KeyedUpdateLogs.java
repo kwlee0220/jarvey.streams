@@ -54,14 +54,14 @@ public class KeyedUpdateLogs<T extends KeyedUpdate> {
 	}
 	
 	public FStream<KeyValue<String,T>> streamOfKey(String key) {
-		return streamOfIndex(readIndex(key));
+		return streamUpdatesOfIndex(readIndex(key));
 	}
 	
 	public FStream<KeyValue<String,T>> streamOfKeys(Iterable<String> keys) {
 		return streamOfIndexes(readIndexes(keys).values());
 	}
 	
-	public FStream<KeyValue<String,T>> streamOfIndex(KeyedUpdateIndex index) {
+	public FStream<KeyValue<String,T>> streamUpdatesOfIndex(KeyedUpdateIndex index) {
 		TopicPartition tpart = new TopicPartition(m_topic, index.getPartitionNumber());
 		ConsumerRecordStream stream 
 			= ConsumerRecordStream.from(m_consumerProps)

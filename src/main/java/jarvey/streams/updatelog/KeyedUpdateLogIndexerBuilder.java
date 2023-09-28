@@ -82,7 +82,7 @@ public final class KeyedUpdateLogIndexerBuilder<T extends KeyedUpdate> implement
 	}
 	
 	public KeyedUpdateLogIndexerBuilder<T> setApplicationId(String id) {
-		m_kafkaParams.setApplicationId(id);
+		m_kafkaParams.setClientId(id);
 		return this;
 	}
 	
@@ -104,7 +104,7 @@ public final class KeyedUpdateLogIndexerBuilder<T extends KeyedUpdate> implement
 		
 		if ( s_logger.isInfoEnabled() ) {
 			s_logger.info("use Kafka servers: {}", m_kafkaParams.getBootstrapServers());
-			s_logger.info("use Kafka application: {}", m_kafkaParams.getApplicationId());
+			s_logger.info("use Kafka application: {}", m_kafkaParams.getClientId());
 		}
 		
 		Properties props = m_kafkaParams.toStreamProperties();

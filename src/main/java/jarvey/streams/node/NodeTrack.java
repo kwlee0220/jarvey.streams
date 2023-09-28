@@ -12,6 +12,7 @@ import utils.stream.FStream;
 import jarvey.streams.model.ObjectTrack;
 import jarvey.streams.model.Timestamped;
 import jarvey.streams.model.TrackletId;
+import jarvey.streams.model.ZoneRelation;
 import jarvey.streams.updatelog.KeyedUpdate;
 
 /**
@@ -48,8 +49,7 @@ public final class NodeTrack implements Timestamped, ObjectTrack, KeyedUpdate, C
 	@SerializedName("location") private Envelope m_box;
 	@SerializedName("world_coord") private Point m_worldCoords;
 	@SerializedName("distance") private double m_distance;
-	@SerializedName("zone_relation") private String m_zoneRelation;
-	@SerializedName("zone_sequence") private String m_zoneSequence;
+	@SerializedName("zone_expr") private ZoneRelation m_zoneRelation;
 	@SerializedName("first_ts") private long m_firstTs;
 	@SerializedName("frame_index") private long m_frameIndex;
 	@SerializedName("ts") private long m_ts;
@@ -121,12 +121,8 @@ public final class NodeTrack implements Timestamped, ObjectTrack, KeyedUpdate, C
 		return m_distance;
 	}
 	
-	public String getZoneRelation() {
+	public ZoneRelation getZoneRelation() {
 		return m_zoneRelation;
-	}
-	
-	public String getZoneSequence() {
-		return m_zoneSequence;
 	}
 	
 	public boolean isSameTrack(NodeTrack other) {
@@ -151,7 +147,7 @@ public final class NodeTrack implements Timestamped, ObjectTrack, KeyedUpdate, C
 	@Override
 	public String toString() {
 		String trackStr = (isDeleted()) ? "Deleted" : "Tracked";
-		String bboxStr = (m_box != null) ? GeoUtils.toString(m_box, 0) : "null";
+//		String bboxStr = (m_box != null) ? GeoUtils.toString(m_box, 0) : "null";
 		String worldCoordStr = m_worldCoords != null ? GeoUtils.toString(m_worldCoords, 1) : "null";
 		return String.format("%s[%s, world=%s, frame_idx=%d, ts=%d]",
 								trackStr, getTrackletId(), worldCoordStr, m_frameIndex, m_ts);

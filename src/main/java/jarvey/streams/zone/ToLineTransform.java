@@ -12,8 +12,9 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.Maps;
 
-import jarvey.streams.model.ObjectTrack;
 import utils.stream.FStream;
+
+import jarvey.streams.model.ObjectTrack;
 
 
 /**

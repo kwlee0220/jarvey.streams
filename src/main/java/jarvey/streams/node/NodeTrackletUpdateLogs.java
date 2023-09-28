@@ -54,6 +54,10 @@ public class NodeTrackletUpdateLogs {
 		m_deserializer = JarveySerdes.NodeTrack().deserializer();
 	}
 	
+	public String getIndexTableName() {
+		return m_idxTableName;
+	}
+	
 	/**
 	 * Tracklet 식별자에 해당하는 index 객체를 얻는다.
 	 * 
@@ -156,23 +160,19 @@ public class NodeTrackletUpdateLogs {
 		
 		String enterZone = rs.getString(3);
 		String exitZone = rs.getString(4);
-		String overlapArea = rs.getString(5);
-		String assoc = rs.getString(6);
 
-		long minTs = rs.getLong(7);
-		Long maxTs = (rs.getLong(8) != -1) ? rs.getLong(8) : null;
-		int partNo = rs.getInt(9);
-		long minOffset = rs.getLong(10);
-		Long maxOffset = (rs.getLong(11) != -1) ? rs.getLong(11) : null;
-		int count = rs.getInt(12);
+		long minTs = rs.getLong(5);
+		Long maxTs = (rs.getLong(6) != -1) ? rs.getLong(6) : null;
+		int partNo = rs.getInt(7);
+		long minOffset = rs.getLong(8);
+		Long maxOffset = (rs.getLong(9) != -1) ? rs.getLong(9) : null;
+		int count = rs.getInt(10);
 		
 		NodeTrackletIndex index = new NodeTrackletIndex(node, trackId, enterZone, exitZone,
 														Range.between(minTs, maxTs),
 														partNo,
 														Range.between(minOffset, maxOffset),
 														count);
-		index.setMotionAssociation(overlapArea, assoc);
-		
 		return index;
 	}
 	
@@ -182,14 +182,14 @@ public class NodeTrackletUpdateLogs {
 		+ 	"track_id varchar not null, "	// 2
 		+ 	"enter_zone varchar, "			// 3
 		+ 	"exit_zone varchar, "			// 4
-		+ 	"overlap_area varchar, "		// 5
-		+ 	"association varchar, "			// 6
-		+ 	"first_ts bigint not null, "	// 7
-		+ 	"last_ts bigint not null, "		// 8
-		+ 	"partition integer not null, "		// 9
-		+ 	"first_offset bigint not null, "	// 10
-		+ 	"last_offset bigint not null, "	// 11
-		+ 	"count integer not null, "		// 12
+//		+ 	"overlap_area varchar, "		// 5
+//		+ 	"association varchar, "			// 6
+		+ 	"first_ts bigint not null, "	// 5
+		+ 	"last_ts bigint not null, "		// 6
+		+ 	"partition integer not null, "		// 7
+		+ 	"first_offset bigint not null, "	// 8
+		+ 	"last_offset bigint not null, "	// 9
+		+ 	"count integer not null, "		// 10
 		+ 	"primary key (node, track_id)"
 		+ ")";
 	

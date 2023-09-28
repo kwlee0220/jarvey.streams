@@ -1,4 +1,4 @@
-package jarvey.streams;
+package jarvey.streams.assoc;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -6,12 +6,12 @@ import java.util.List;
 import java.util.Set;
 
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 
 import utils.Indexed;
 import utils.func.Funcs;
 import utils.stream.FStream;
 
-import jarvey.streams.model.BinaryAssociation;
 import jarvey.streams.model.TrackletId;
 
 
@@ -84,6 +84,21 @@ public class BinaryAssociationCollection implements Iterable<BinaryAssociation> 
 						.getOrNull();
 	}
 	
+	public boolean update(BinaryAssociation assoc) {
+		BinaryAssociation prev = Funcs.replaceFirst(m_associations, ba -> ba.match(assoc), assoc);
+		if ( prev != null ) {
+			return true;
+		}
+		else {
+			return add(assoc);
+		}
+	}
+	
+	public BinaryAssociation remove(TrackletId trkId1, TrackletId trkId2) {
+		Set<TrackletId> trkIds = Sets.newHashSet(trkId1, trkId2);
+		return Funcs.removeFirstIf(m_associations, ba -> ba.getTracklets().equals(trkIds));
+	}
+	
 	/**
 	 * 주어진 tracklet들로 구성된 association을 collection에서 제거한다.
 	 *
@@ -96,6 +111,19 @@ public class BinaryAssociationCollection implements Iterable<BinaryAssociation> 
 	
 	public boolean add(BinaryAssociation assoc) {
 		return m_allowConflict ? addAllowConflict(assoc) : addDisallowConflict(assoc);
+	}
+
+	public static List<BinaryAssociation> selectBestAssociations(List<BinaryAssociation> assocList) {
+		List<BinaryAssociation> sorteds = FStream.from(assocList)
+												.sort(BinaryAssociation::getScore, true)
+												.toList();
+		List<BinaryAssociation> bestAssocList = Lists.newArrayList();
+		while ( sorteds.size() > 0 ) {
+			BinaryAssociation best = sorteds.remove(0);
+			sorteds = Funcs.removeIf(sorteds, ba -> ba.intersectsTracklet(best));
+		}
+		
+		return bestAssocList;
 	}
 	
 	private boolean addAllowConflict(BinaryAssociation assoc) {

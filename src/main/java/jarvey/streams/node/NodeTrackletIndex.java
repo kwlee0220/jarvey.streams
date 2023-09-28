@@ -102,27 +102,30 @@ public final class NodeTrackletIndex implements Timestamped {
 		return !m_offsetRange.isInfiniteMax();
 	}
 	
-	private String parseZone(NodeTrack track) {
-		ZoneRelation zoneRel = ZoneRelation.parse(track.getZoneRelation());
-		switch ( zoneRel.getRelation()  ) {
-			case Entered: case Inside: case Through: case Left:
-				return zoneRel.getZoneId();
-			default:
-				return null;
-		}
-	}
+//	private String parseZone(NodeTrack track) {
+//		ZoneRelation zoneRel = ZoneRelation.parse(track.getZoneRelation());
+//		switch ( zoneRel.getRelation()  ) {
+//			case Entered: case Inside: case Through: case Left:
+//				return zoneRel.getZoneId();
+//			default:
+//				return null;
+//		}
+//	}
 	
 	boolean update(NodeTrack track) {
 		boolean zoneUpdated = false;
 		
-		String zone = parseZone(track);
-		if ( zone != null ) {
-			if ( m_enterZone == null ) {
-				m_enterZone = zone;
-				zoneUpdated = true;
-			}
-			if ( m_exitZone == null || !m_exitZone.equals(zone) ) {
-				m_exitZone = zone;
+		ZoneRelation rel = track.getZoneRelation();
+		if ( rel != null ) {
+			String zoneId = rel.getZoneId();
+			if ( zoneId != null ) {
+				if ( m_enterZone == null ) {
+					m_enterZone = zoneId;
+					zoneUpdated = true;
+				}
+				if ( m_exitZone == null || !m_exitZone.equals(zoneId) ) {
+					m_exitZone = zoneId;
+				}
 			}
 		}
 		m_count += 1;

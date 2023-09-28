@@ -1,4 +1,4 @@
-package jarvey.streams.model;
+package jarvey.streams.assoc;
 
 import javax.annotation.Nullable;
 
@@ -10,6 +10,8 @@ import com.google.gson.annotations.SerializedName;
 
 import utils.geo.util.GeoUtils;
 
+import jarvey.streams.model.ObjectTrack;
+import jarvey.streams.model.TrackletId;
 import jarvey.streams.node.NodeTrack;
 import jarvey.streams.serialization.json.GsonSerde;
 import jarvey.streams.serialization.json.GsonUtils;

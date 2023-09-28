@@ -6,7 +6,6 @@ import com.google.common.base.Objects;
 import com.google.gson.annotations.SerializedName;
 
 import jarvey.streams.model.TrackletId;
-import jarvey.streams.model.ZoneRelation;
 import jarvey.streams.updatelog.KeyedUpdate;
 
 /**
@@ -17,16 +16,13 @@ public final class TrackFeature implements KeyedUpdate, Comparable<TrackFeature>
 	@SerializedName("node") private String m_node;
 	@SerializedName("track_id") private String m_trackId;
 	@Nullable @SerializedName("feature") private float[] m_feature;
-	@Nullable @SerializedName("zone_relation") private String m_zoneRelation;
 	@SerializedName("frame_index") private long m_frameIndex;
 	@SerializedName("ts") private long m_ts;
 	
-	public TrackFeature(String node, String trackId, float[] feature, String zoneRelation,
-						long frameIndex, long ts) {
+	public TrackFeature(String node, String trackId, float[] feature, long frameIndex, long ts) {
 		m_node = node;
 		m_trackId = trackId;
 		m_feature = feature;
-		m_zoneRelation = zoneRelation;
 		m_frameIndex = frameIndex;
 		m_ts = ts;
 	}
@@ -49,7 +45,7 @@ public final class TrackFeature implements KeyedUpdate, Comparable<TrackFeature>
 	}
 	
 	public boolean isDeleted() {
-		return "D".equals(m_zoneRelation);
+		return m_feature == null;
 	}
 
 	@Override
@@ -59,14 +55,6 @@ public final class TrackFeature implements KeyedUpdate, Comparable<TrackFeature>
 	
 	public float[] getFeature() {
 		return m_feature;
-	}
-	
-	public String getZoneRelationString() {
-		return m_zoneRelation;
-	}
-	
-	public ZoneRelation getZoneRelation() {
-		return ZoneRelation.parse(m_zoneRelation);
 	}
 	
 	public long getFrameIndex() {
@@ -95,7 +83,7 @@ public final class TrackFeature implements KeyedUpdate, Comparable<TrackFeature>
 	@Override
 	public String toString() {
 		String trackStr = (isLastUpdate()) ? "Deleted" : "Feature";
-		return String.format("%s[node=%s, track_id=%s, zone=%s, frame_idx=%d, ts=%d]",
-								trackStr, m_node, m_trackId, m_zoneRelation, m_frameIndex, m_ts);
+		return String.format("%s[node=%s, track_id=%s, frame_idx=%d, ts=%d]",
+								trackStr, m_node, m_trackId, m_frameIndex, m_ts);
 	}
 }

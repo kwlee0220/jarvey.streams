@@ -103,6 +103,11 @@ public class KeyedUpdateIndexBuilder<T extends KeyedUpdate>
 		String key = update.getKey();
 		Record record = m_store.get(key);
 		if ( record == null ) { // 주어진 key에 대한 첫번째 갱신인 경우.
+			// 첫번째 갱신이 마지막(delete) 이벤트인 경우는 무시한다.
+			if ( update.isLastUpdate() ) {
+				return Collections.emptyList();
+			}
+			
 			if ( s_logger.isDebugEnabled() ) {
 				s_logger.debug("create an index entry: key={}, ts={}, offset={}",
 								key, update.getTimestamp(), m_context.offset());

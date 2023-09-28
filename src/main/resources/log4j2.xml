@@ -19,6 +19,14 @@
 	
 	<Loggers>
 		<Logger name="org.apache.kafka" level="warn"/>
+		<Logger name="jarvey.assoc.feature.FeatureBasedAssociator" level="info"/>
+		<Logger name="jarvey.streams.updatelog" level="info"/>
+		
+		<Logger name="jarvey.streams.assoc.motion.FinalMotionAssociationSelector" level="info"/>
+		<Logger name="jarvey.streams.assoc.motion.FinalFeatureAssociationSelector" level="info"/>
+		<Logger name="jarvey.streams.assoc.feature.FeatureBinaryTrackletAssociator" level="info"/>
+		<Logger name="jarvey.streams.assoc.AssociationStore" level="info"/>
+		
 		<Root level="info">
 			<AppenderRef ref="STDOUT"/>
 		</Root>

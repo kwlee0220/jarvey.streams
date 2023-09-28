@@ -4,8 +4,9 @@ import java.util.Set;
 
 import com.google.gson.annotations.SerializedName;
 
-import jarvey.streams.model.Timestamped;
 import utils.func.Funcs;
+
+import jarvey.streams.model.Timestamped;
 
 
 /**

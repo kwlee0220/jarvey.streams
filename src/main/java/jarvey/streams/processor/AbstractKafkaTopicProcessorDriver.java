@@ -24,8 +24,8 @@ import utils.func.CheckedRunnable;
 import utils.func.Funcs;
 import utils.func.Unchecked;
 
-import jarvey.streams.KafkaAdmins;
 import jarvey.streams.KafkaParameters;
+import jarvey.streams.processor.KafkaTopicPartitionProcessor.ProcessResult;
 
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
@@ -42,7 +42,6 @@ public abstract class AbstractKafkaTopicProcessorDriver<K,V>
 	@Mixin protected KafkaParameters m_kafkaParams;
 	private boolean m_stopOnPollTimeout = false;
 	private boolean m_updateOffset = true;
-	private boolean m_cleanUpConsumerGroup = true;
 	
 	private final Map<TopicPartition,KafkaTopicPartitionProcessor<K,V>> m_processors = Maps.newHashMap();
 	private final Map<TopicPartition,OffsetAndMetadata> m_offsets = Maps.newHashMap();
@@ -90,14 +89,6 @@ public abstract class AbstractKafkaTopicProcessorDriver<K,V>
 
 	@Override
 	public void run() throws Throwable {
-		if ( m_cleanUpConsumerGroup ) {
-			try {
-				KafkaAdmins admin = new KafkaAdmins(m_kafkaParams.getBootstrapServers());
-				admin.deleteConsumerGroup(m_kafkaParams.getApplicationId());
-			}
-			catch ( Exception ignored ) { }
-		}
-		
 		try ( KafkaConsumer<K,V> consumer = openKafkaConsumer() ) {
 			m_consumer = consumer;
 			
@@ -126,8 +117,11 @@ public abstract class AbstractKafkaTopicProcessorDriver<K,V>
 						for ( TopicPartition tpart: records.partitions() ) {
 							List<ConsumerRecord<K,V>> recList = records.records(tpart);
 							KafkaTopicPartitionProcessor<K,V> processor = getOrAllocateProcessor(tpart);
-							processor.process(tpart, recList)
-									.ifPresent(os -> m_offsets.put(tpart, os));
+							ProcessResult result = processor.process(tpart, recList);
+							
+							if ( result.getOffsetAndMetadata() != null ) {
+								m_offsets.put(tpart, result.getOffsetAndMetadata());
+							}
 							
 							// Kafka에서 읽은 마지막 consumer record에서 timestamp를 읽어서
 							// current timestamp 값을 설정한다.
@@ -140,6 +134,14 @@ public abstract class AbstractKafkaTopicProcessorDriver<K,V>
 								currentTs = eventTs;
 							}
 							lastEventTs = eventTs;
+							
+							if ( !result.getContinue() ) {
+								if ( m_updateOffset ) {
+									consumer.commitSync(offsets);
+								}
+								
+								return;
+							}
 						}
 					}
 					else {

@@ -1,4 +1,4 @@
-package jarvey.streams.model;
+package jarvey.streams.assoc;
 
 import static utils.Utilities.checkArgument;
 
@@ -15,6 +15,9 @@ import com.google.gson.annotations.SerializedName;
 import utils.func.Funcs;
 import utils.geo.util.GeoUtils;
 import utils.stream.FStream;
+
+import jarvey.streams.model.ObjectTrack;
+import jarvey.streams.model.TrackletId;
 
 
 /**
@@ -64,18 +67,20 @@ public final class GlobalTrack implements ObjectTrack {
 								assoc.getFirstTimestamp(), ts);
 	}
 	
-	public static final GlobalTrack from(Association assoc, LocalTrack ltrack,
+	public static final GlobalTrack from(LocalTrack ltrack, @Nullable Association assoc, 
 											@Nullable String overlapArea) {
-		checkArgument(assoc != null, "assoc is null");
-		
 		if ( ltrack.isDeleted() ) {
 			return new GlobalTrack(ltrack.getKey(), State.DELETED, overlapArea, null, null,
 									ltrack.getFirstTimestamp(), ltrack.getTimestamp());
 		}
-		else {
+		else if ( assoc != null ) {
 			return new GlobalTrack(assoc.getId(), State.ASSOCIATED, overlapArea, ltrack.getLocation(),
 									Collections.singletonList(ltrack), ltrack.getFirstTimestamp(),
 									ltrack.getTimestamp());
+		}
+		else {
+			return new GlobalTrack(ltrack.getKey(), State.ISOLATED, overlapArea, ltrack.getLocation(),
+									null, ltrack.getFirstTimestamp(), ltrack.getTimestamp());
 		}
 	}
 	
@@ -94,17 +99,6 @@ public final class GlobalTrack implements ObjectTrack {
 		
 		return new GlobalTrack(leader.getKey(), State.ISOLATED, overlapArea, avgPt, null,
 								leader.getFirstTimestamp(), ts);
-	}
-	
-	public static final GlobalTrack from(LocalTrack ltrack, @Nullable String overlapArea) {
-		if ( ltrack.isDeleted() ) {
-			return new GlobalTrack(ltrack.getKey(), State.DELETED, overlapArea, null, null,
-									ltrack.getFirstTimestamp(), ltrack.getTimestamp());
-		}
-		else {
-			return new GlobalTrack(ltrack.getKey(), State.ISOLATED, overlapArea, ltrack.getLocation(),
-									null, ltrack.getFirstTimestamp(), ltrack.getTimestamp());
-		}
 	}
 	
 	public GlobalTrack(String id, State state, String overlapArea, Point loc, List<LocalTrack> ltracks,
@@ -163,7 +157,7 @@ public final class GlobalTrack implements ObjectTrack {
 												.map(LocalTrack::getTrackletId)
 												.sort()
 												.toList();
-			supportsStr = String.format(" {%s}", AssociationClosure.toString(leaderId, trkIds));
+			supportsStr = String.format(" {%s}", Association.toString(leaderId, trkIds));
 		}
 		
 		return String.format("%s%s %s %s#%d%s (%d)",

@@ -2,6 +2,7 @@ package jarvey.streams;
 
 import java.time.Duration;
 import java.util.Properties;
+import java.util.concurrent.ExecutionException;
 
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;
@@ -20,7 +21,7 @@ import picocli.CommandLine.Option;
  */
 public class KafkaParameters {
 	private String m_bootstrapServers = "localhost:9092";
-	private String m_appId = null;
+	private String m_clientId = null;
 	private String m_autoOffset = "latest";
 	private boolean m_enableAutoCommit = false;
 	
@@ -48,13 +49,13 @@ public class KafkaParameters {
 		m_bootstrapServers = servers;
 	}
 
-	public String getApplicationId() {
-		return m_appId;
+	public String getClientId() {
+		return m_clientId;
 	}
 	
-	@Option(names={"--app-id"}, paramLabel="application id")
-	public void setApplicationId(String appId) {
-		m_appId = appId;
+	@Option(names={"--client-id"}, paramLabel="Kafka client id")
+	public void setClientId(String appId) {
+		m_clientId = appId;
 	}
 
 	public AutoOffsetReset getAutoOffsetReset() {
@@ -232,9 +233,9 @@ public class KafkaParameters {
 			}
 			
 			props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, m_bootstrapServers);
-			if ( m_appId != null ) {
-				props.put(ConsumerConfig.GROUP_ID_CONFIG, m_appId);
-			}
+			
+			String clientId = (m_clientId != null) ? m_clientId : Long.toHexString(System.nanoTime());
+			props.put(ConsumerConfig.GROUP_ID_CONFIG, clientId);
 			props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, m_autoOffset);
 			props.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, ""+m_enableAutoCommit);
 			props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, keyDeserializerClassName);
@@ -257,9 +258,8 @@ public class KafkaParameters {
 	public Properties toStreamProperties() {
 		Properties props = new Properties();
 
-		if ( m_appId != null ) {
-			props.put(StreamsConfig.APPLICATION_ID_CONFIG, m_appId);
-		}
+		String clientId = (m_clientId != null) ? m_clientId : Long.toHexString(System.nanoTime());
+		props.put(StreamsConfig.APPLICATION_ID_CONFIG, clientId);
 		props.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, m_bootstrapServers);
 		props.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, m_keySerdeClassName);
 		props.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, m_valueSerdeClassName);
@@ -268,5 +268,14 @@ public class KafkaParameters {
 		}
 		
 		return props;
+	}
+	
+	public void deleteConsumerGroup() throws InterruptedException, ExecutionException {
+		if ( getClientId() == null ) {
+			throw new IllegalArgumentException("client-id is not specified");
+		}
+		
+		KafkaAdmins admin = new KafkaAdmins(getBootstrapServers());
+		admin.deleteConsumerGroup(getClientId());
 	}
 }

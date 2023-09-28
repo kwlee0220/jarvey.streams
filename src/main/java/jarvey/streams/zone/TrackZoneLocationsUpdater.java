@@ -14,10 +14,11 @@ import org.apache.kafka.streams.state.KeyValueStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import jarvey.streams.UpdateTimeAssociatedKeyValueStore;
 import utils.func.FOption;
 import utils.func.Funcs;
 import utils.stream.FStream;
+
+import jarvey.streams.UpdateTimeAssociatedKeyValueStore;
 
 
 /**

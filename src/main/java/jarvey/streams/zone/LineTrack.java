@@ -9,9 +9,10 @@ import org.locationtech.jts.geom.Point;
 
 import com.google.gson.annotations.SerializedName;
 
+import utils.geo.util.GeoUtils;
+
 import jarvey.streams.model.ObjectTrack;
 import jarvey.streams.model.Timestamped;
-import utils.geo.util.GeoUtils;
 
 /**
  * 

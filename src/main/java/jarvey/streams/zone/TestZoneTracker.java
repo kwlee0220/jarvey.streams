@@ -25,11 +25,12 @@ import org.yaml.snakeyaml.Yaml;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Range;
 
-import io.confluent.common.utils.TestUtils;
 import utils.UnitUtils;
 import utils.geo.util.GeoUtils;
 import utils.stream.FStream;
 import utils.stream.KVFStream;
+
+import io.confluent.common.utils.TestUtils;
 
 /**
  * 

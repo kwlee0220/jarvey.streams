@@ -1,17 +1,22 @@
-package jarvey.streams.model;
+package jarvey.streams.assoc;
 
+import java.util.Collection;
 import java.util.Objects;
 import java.util.Set;
 
 import com.google.common.collect.Sets;
 import com.google.gson.annotations.SerializedName;
 
+import utils.func.Funcs;
+
+import jarvey.streams.model.TrackletId;
+
 
 /**
  * 
  * @author Kang-Woo Lee (ETRI)
  */
-public final class BinaryAssociation implements Association {
+public final class BinaryAssociation {
 	@SerializedName("id") private String m_id;
 	@SerializedName("left") private TimedTracklet m_left;
 	@SerializedName("right") private TimedTracklet m_right;
@@ -72,7 +77,6 @@ public final class BinaryAssociation implements Association {
 		m_score = score;
 	}
 
-	@Override
 	public String getId() {
 		return m_id;
 	}
@@ -90,7 +94,6 @@ public final class BinaryAssociation implements Association {
 		}
 	}
 
-	@Override
 	public Set<TrackletId> getTracklets() {
 		return Sets.newHashSet(m_left.m_tracklet, m_right.m_tracklet);
 	}
@@ -118,13 +121,23 @@ public final class BinaryAssociation implements Association {
 	public TrackletId getOther(TrackletId trkId) {
 		return trkId.equals(getLeftTrackletId()) ? getRightTrackletId() : getLeftTrackletId();
 	}
+	
+	public boolean containsTracklet(TrackletId trackletId) {
+		return m_left.m_tracklet.equals(trackletId) || m_right.m_tracklet.equals(trackletId);
+	}
+	
+	public boolean intersectsTracklet(BinaryAssociation assoc) {
+		return intersectsTracklet(assoc.getTracklets());
+	}
+	
+	public boolean intersectsTracklet(Collection<TrackletId> trkIds) {
+		return trkIds.contains(m_left.m_tracklet) || trkIds.contains(m_right.m_tracklet);
+	}
 
-	@Override
 	public double getScore() {
 		return m_score;
 	}
 
-	@Override
 	public long getFirstTimestamp() {
 		return m_firstTs;
 	}
@@ -137,7 +150,6 @@ public final class BinaryAssociation implements Association {
 		return m_right.m_ts;
 	}
 	
-	@Override
 	public long getTimestamp() {
 		return Math.max(getLeftTimestamp(), getRightTimestamp());
 	}
@@ -147,28 +159,43 @@ public final class BinaryAssociation implements Association {
 				&& Objects.equals(getRightTrackletId(), other.getRightTrackletId());
 	}
 	
-	@Override
-	public BinaryAssociation removeTracklet(TrackletId trkId) {
-		if ( getLeftTrackletId().equals(trkId) || getRightTrackletId().equals(trkId) ) {
-			return null;
+	public BinaryRelation relate(BinaryAssociation other) {
+		Set<TrackletId> otherTrkIds = other.getTracklets();
+		
+		boolean matchLeft = otherTrkIds.contains(m_left.m_tracklet);
+		boolean matchRight = otherTrkIds.contains(m_right.m_tracklet);
+		if ( !matchLeft && !matchRight ) {
+			return BinaryRelation.DISJOINT;
+		}
+		else if ( matchLeft && matchRight ) {
+			return BinaryRelation.SAME;
 		}
 		else {
-			return this;
+			Set<String> otherNodeIds = Funcs.map(otherTrkIds, TrackletId::getNodeId);
+			
+			// match되지 않는 tracklet id를 사용하여 판단
+			TrackletId unmatchedTrkId = matchLeft ? m_right.m_tracklet : m_left.m_tracklet;
+			if ( otherNodeIds.contains(unmatchedTrkId.getNodeId()) ) {
+				return BinaryRelation.CONFLICT;
+			}
+			else {
+				return BinaryRelation.MERGEABLE;
+			}
 		}
-	} 
+	}
 	
 	@Override
 	public String toString() {
 		TrackletId trkId = TrackletId.fromString(m_id);
 		if ( getLeftTrackletId().equals(trkId) ) {
 			TrackletId leader = getLeftTrackletId();
-			return String.format("%s[*%s]-%s:%.2f#%d",
+			return String.format("%s[*%s]-%s:%.3f#%d",
 								leader.getNodeId(), leader.getTrackId(), getRightTrackletId(),
 								m_score, getTimestamp());
 		}
 		else {
 			TrackletId leader = getRightTrackletId();
-			return String.format("%s-%s[*%s]:%.2f#%d",
+			return String.format("%s-%s[*%s]:%.3f#%d",
 								getLeftTrackletId(), leader.getNodeId(), leader.getTrackId(),
 								m_score, getTimestamp());
 		}

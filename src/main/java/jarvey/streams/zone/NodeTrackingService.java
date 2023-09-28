@@ -15,15 +15,17 @@ import org.apache.kafka.streams.state.ReadOnlyKeyValueStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.javalin.Javalin;
-import io.javalin.http.Context;
+import utils.jdbc.JdbcProcessor;
+import utils.stream.FStream;
+
 import jarvey.streams.model.TrackletId;
 import jarvey.streams.serialization.json.GsonUtils;
+
+import io.javalin.Javalin;
+import io.javalin.http.Context;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
-import utils.jdbc.JdbcProcessor;
-import utils.stream.FStream;
 
 /**
  * 

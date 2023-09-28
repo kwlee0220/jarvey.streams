@@ -48,7 +48,7 @@ public class NodeTrackletIndexCollector implements ValueTransformer<NodeTrack,
 	private int m_hitCount = 0;
 
 	public NodeTrackletIndexCollector(String storeName, Duration timeToLive, boolean useMockStore,
-							JdbcProcessor jdbc, String tableName) {
+										JdbcProcessor jdbc, String tableName) {
 		m_storeName = storeName;
 		m_timeToLive = timeToLive;
 		m_useMockStore = useMockStore;
@@ -153,14 +153,12 @@ public class NodeTrackletIndexCollector implements ValueTransformer<NodeTrack,
 //	+ 	"enter_zone varchar, "			// 3
 //	+ 	"exit_zone varchar, "			// 4
 //	+ 	"zone_sequence varchar, "		// 5
-//	+ 	"overlap_area varchar, "		// 6
-//	+ 	"association varchar, "			// 7
-//	+ 	"first_ts bigint not null, "	// 8
-//	+ 	"last_ts bigint not null, "		// 9
-//	+ 	"partition integer not null, "		// 10
-//	+ 	"first_offset bigint not null, "	// 11
-//	+ 	"last_offset bigint not null, "	// 12
-//	+ 	"count integer not null, "		// 13
+//	+ 	"first_ts bigint not null, "	// 6
+//	+ 	"last_ts bigint not null, "		// 7
+//	+ 	"partition integer not null, "		// 8
+//	+ 	"first_offset bigint not null, "	// 9
+//	+ 	"last_offset bigint not null, "	// 10
+//	+ 	"count integer not null, "		// 11
 
 	private static final String SQL_INSERT_INDEX
 		= "insert into %s (node, track_id, first_ts, last_ts, partition, first_offset, last_offset, count) "
@@ -175,25 +173,6 @@ public class NodeTrackletIndexCollector implements ValueTransformer<NodeTrack,
 				pstmt.setLong(3, firstTs);
 				pstmt.setInt(4, partNo);
 				pstmt.setLong(5, firstOffset);
-				
-				pstmt.execute();
-			}
-		}
-		catch ( SQLException e ) {
-			throw new RuntimeException(e);
-		}
-	}
-
-	private static final String SQL_UPDATE_ASSOCIATION
-		= "update %s set overlap_area=?, association=? where node=? and track_id=?";
-	private void updateAssociation(TrackletId trkId, String overlapArea, String association) {
-		String sqlStr = String.format(SQL_UPDATE_ASSOCIATION, m_tableName);
-		try ( Connection conn = m_jdbc.connect() ) {
-			try ( PreparedStatement pstmt = conn.prepareStatement(sqlStr) ) {
-				pstmt.setString(1, overlapArea);
-				pstmt.setString(2, association);
-				pstmt.setString(3, trkId.getNodeId());
-				pstmt.setString(4, trkId.getTrackId());
 				
 				pstmt.execute();
 			}
@@ -223,7 +202,7 @@ public class NodeTrackletIndexCollector implements ValueTransformer<NodeTrack,
 	}
 	
 	private static final String SQL_UPDATE_INDEX
-			= "update %s set enter_zone=?, exit_zone=?, overlap_area=?, association=?, "
+			= "update %s set enter_zone=?, exit_zone=?, "
 			+ "last_ts=?, last_offset=?, count=? where node=? and track_id=?";
 	private void updateIndex(NodeTrackletIndex index) {
 		String sqlStr = String.format(SQL_UPDATE_INDEX, m_tableName);
@@ -231,13 +210,11 @@ public class NodeTrackletIndexCollector implements ValueTransformer<NodeTrack,
 			try ( PreparedStatement pstmt = conn.prepareStatement(sqlStr) ) {
 				pstmt.setString(1, index.getEnterZone());
 				pstmt.setString(2, index.getExitZone());
-				pstmt.setString(3, index.getOverlapAreaId());
-				pstmt.setString(4, index.getAssociation());
-				pstmt.setLong(5, index.getTimestampRange().max());
-				pstmt.setLong(6, index.getTopicOffsetRange().max());
-				pstmt.setInt(7, index.getUpdateCount());
-				pstmt.setString(8, index.getNodeId());
-				pstmt.setString(9, index.getTrackId());
+				pstmt.setLong(3, index.getTimestampRange().max());
+				pstmt.setLong(4, index.getTopicOffsetRange().max());
+				pstmt.setInt(5, index.getUpdateCount());
+				pstmt.setString(6, index.getNodeId());
+				pstmt.setString(7, index.getTrackId());
 				
 				pstmt.execute();
 			}

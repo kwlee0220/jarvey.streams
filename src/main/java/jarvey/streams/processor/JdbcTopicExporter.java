@@ -5,10 +5,8 @@ import java.sql.SQLException;
 import java.util.List;
 
 import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.common.TopicPartition;
 
-import utils.func.FOption;
 import utils.jdbc.JdbcProcessor;
 
 /**
@@ -18,7 +16,7 @@ import utils.jdbc.JdbcProcessor;
 public abstract class JdbcTopicExporter<K,V> implements KafkaTopicPartitionProcessor<K,V> {
 	private final JdbcProcessor m_jdbc;
 	
-	protected abstract FOption<OffsetAndMetadata>
+	protected abstract ProcessResult
 	export(Connection conn, TopicPartition tpart, List<ConsumerRecord<K,V>> partition) throws SQLException;
 	
 	protected JdbcTopicExporter(JdbcProcessor jdbc) {
@@ -30,7 +28,7 @@ public abstract class JdbcTopicExporter<K,V> implements KafkaTopicPartitionProce
 	}
 
 	@Override
-	public FOption<OffsetAndMetadata> process(TopicPartition tpart,
+	public ProcessResult process(TopicPartition tpart,
 												List<ConsumerRecord<K,V>> partition) throws Exception {
 		try ( Connection conn = m_jdbc.connect() ) {
 			return export(conn, tpart, partition);

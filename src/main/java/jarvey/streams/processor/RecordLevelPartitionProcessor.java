@@ -3,11 +3,7 @@ package jarvey.streams.processor;
 import java.util.List;
 
 import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.common.TopicPartition;
-
-import utils.func.FOption;
-import utils.stream.FStream;
 
 
 /**
@@ -27,10 +23,16 @@ public class RecordLevelPartitionProcessor<K,V> implements KafkaTopicPartitionPr
 	}
 
 	@Override
-	public FOption<OffsetAndMetadata> process(TopicPartition tpart, List<ConsumerRecord<K, V>> partition) {
-		return FStream.from(partition)
-						.flatMapOption(m_recordProcessor::process)
-						.findLast();
+	public ProcessResult process(TopicPartition tpart, List<ConsumerRecord<K, V>> partition) {
+		ProcessResult result = null;
+		for ( ConsumerRecord<K, V> rec: partition ) {
+			result = m_recordProcessor.process(rec);
+			if ( !result.getContinue() ) {
+				break;
+			}
+		}
+		
+		return result;
 	}
 
 	@Override

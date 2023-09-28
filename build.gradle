@@ -75,7 +75,7 @@ ext {
 	geotools_version = '26.1'
 	jts_version = '1.18.2'
 	
-	kafka_streams_version = '2.7.0'
+	kafka_streams_version = '3.5.1'
 	avro_version = '1.10.1'
 	
 	protobuf_java_version='3.24.1'
@@ -118,6 +118,8 @@ dependencies {
 
 	implementation "com.google.protobuf:protobuf-java:${protobuf_java_version}"
 	implementation "com.github.daniel-shuy:kafka-protobuf-serde:${kafka_protobuf_serde_version}"
+	
+	implementation fileTree(dir: 'lib', include: '*.jar')
 	
 	testImplementation group: 'junit', name: 'junit', version: '4.12'
 }

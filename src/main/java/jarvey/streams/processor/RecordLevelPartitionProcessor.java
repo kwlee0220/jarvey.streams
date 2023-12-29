@@ -24,24 +24,27 @@ public class RecordLevelPartitionProcessor<K,V> implements KafkaTopicPartitionPr
 
 	@Override
 	public ProcessResult process(TopicPartition tpart, List<ConsumerRecord<K, V>> partition) {
-		ProcessResult result = null;
+		ProcessResult accum = ProcessResult.NULL;
 		for ( ConsumerRecord<K, V> rec: partition ) {
-			result = m_recordProcessor.process(rec);
-			if ( !result.getContinue() ) {
+			ProcessResult result = m_recordProcessor.process(tpart, rec);
+			
+			// ProcessResult를 갱신한다.
+			accum = accum.combine(result);
+			if ( accum.stopProcess() ) {
 				break;
 			}
 		}
 		
-		return result;
+		return accum;
+	}
+
+	@Override
+	public ProcessResult timeElapsed(TopicPartition tpart, long expectedTs) {
+		return m_recordProcessor.timeElapsed(tpart, expectedTs);
 	}
 
 	@Override
 	public long extractTimestamp(ConsumerRecord<K, V> record) {
 		return m_recordProcessor.extractTimestamp(record);
-	}
-
-	@Override
-	public void timeElapsed(long expectedTs) {
-		m_recordProcessor.timeElapsed(expectedTs);
 	}
 }

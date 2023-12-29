@@ -2,6 +2,7 @@ package jarvey.streams.updatelog;
 
 import jarvey.streams.model.Timestamped;
 
+
 /**
  *
  * @author Kang-Woo Lee (ETRI)

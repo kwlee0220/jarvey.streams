@@ -1,11 +1,11 @@
 apply plugin: 'java-library'
 apply plugin: 'maven-publish'
-apply plugin: 'com.github.johnrengelman.shadow'
 apply plugin: 'com.google.protobuf'
+apply plugin: 'com.github.johnrengelman.shadow'
 //apply plugin: 'com.commercehub.gradle.plugin.avro'
 
 group = 'etri'
-version = '0.1.0'
+version = '2023.12.29'
 
 sourceCompatibility = JavaVersion.VERSION_1_8
 [compileJava,compileTestJava]*.options*.encoding = 'UTF-8'
@@ -20,7 +20,8 @@ buildscript {
 	}
 	dependencies {
 		classpath 'com.github.jengelman.gradle.plugins:shadow:4.0.4'
-		classpath 'com.google.protobuf:protobuf-gradle-plugin:0.9.3'
+		classpath 'com.google.protobuf:protobuf-gradle-plugin:0.8.7'
+//		classpath 'com.google.protobuf:protobuf-gradle-plugin:0.9.3'
 //		classpath 'com.netflix.nebula:gradle-aggregate-javadocs-plugin:2.2.+'
 //		classpath 'com.commercehub.gradle.plugin:gradle-avro-plugin:0.9.1'
 	}
@@ -47,12 +48,10 @@ sourceSets {
 		java {
 			srcDirs 'build/generated/source/proto/main/grpc'
 			srcDirs 'build/generated/source/proto/main/java'
-			srcDirs 'build/generated/source/proto/test/grpc'
-			srcDirs 'build/generated/source/proto/test/java'
 		}
-		proto {
-			srcDirs 'src/main/proto'
-		}
+//		proto {
+//			srcDirs 'src/main/proto'
+//		}
 	}
 }
 
@@ -71,6 +70,7 @@ ext {
 	log4j_version = '2.18.0'
 	gson_version = '2.9.0'
 	snakeyaml_version = '1.20'
+	picocli_version = '3.9.6'
 	
 	geotools_version = '26.1'
 	jts_version = '1.18.2'
@@ -84,6 +84,9 @@ ext {
 	postgresql_version = '42.3.3'
 	javalin_version = '4.6.3'
 	okhttp_version = '4.10.0'
+	
+	rxjava_version = '3.1.8'
+	
 }
 
 dependencies {
@@ -99,6 +102,9 @@ dependencies {
 	implementation "org.apache.avro:avro:${avro_version}"
 	implementation "org.yaml:snakeyaml:${snakeyaml_version}"
 	
+	// command line parser
+	implementation "info.picocli:picocli:${picocli_version}"
+	
 	// GeoTools
 	implementation	"org.geotools:gt-main:${geotools_version}"
 	//api "org.locationtech.jts-core:jts:${jts_version}"
@@ -108,6 +114,9 @@ dependencies {
 	implementation ('io.confluent:kafka-streams-avro-serde:6.0.1') {
 		exclude group: 'org.apache.kafka', module: 'kafka-clients'
 	}
+	
+	// RxJava
+	implementation "io.reactivex.rxjava3:rxjava:${rxjava_version}"
 	
 	// Postgresql
 	implementation "org.postgresql:postgresql:${postgresql_version}"

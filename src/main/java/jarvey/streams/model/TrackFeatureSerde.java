@@ -24,7 +24,11 @@ public class TrackFeatureSerde implements Serde<TrackFeature> {
 	
 	public static final TrackFeatureSerde s_serde = new TrackFeatureSerde();
 	public static final Serializer<TrackFeature> s_serializer = new TrackFeatureSerializer();
-	public static final Deserializer<TrackFeature> s_deerializer = new TrackFeatureDeserializer();
+	public static final Deserializer<TrackFeature> s_deserializer = new TrackFeatureDeserializer();
+	
+	public static TrackFeatureSerde getInstance() {
+		return s_serde;
+	}
 
 	@Override
 	public Serializer<TrackFeature> serializer() {
@@ -33,7 +37,7 @@ public class TrackFeatureSerde implements Serde<TrackFeature> {
 
 	@Override
 	public Deserializer<TrackFeature> deserializer() {
-		return s_deerializer;
+		return s_deserializer;
 	}
 	
 	private static class TrackFeatureSerializer implements Serializer<TrackFeature> {

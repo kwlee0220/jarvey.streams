@@ -5,6 +5,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.annotation.Nullable;
+
 import org.locationtech.jts.geom.Point;
 
 import com.google.common.collect.Lists;
@@ -22,6 +24,7 @@ import jarvey.streams.assoc.motion.OverlapAreaRegistry;
 import jarvey.streams.model.TrackletId;
 import jarvey.streams.node.NodeTrack;
 
+
 /**
  * 
  * @author Kang-Woo Lee (ETRI)
@@ -29,7 +32,7 @@ import jarvey.streams.node.NodeTrack;
 public abstract class AbstractGlobalTrackGenerator {
 	private static final long INTERVAL = 100;
 
-	private final OverlapAreaRegistry m_areaRegistry;
+	@Nullable private final OverlapAreaRegistry m_areaRegistry;
 	
 	private final List<LocalTrack> m_trackBuffer = Lists.newArrayList();
 	private long m_firstTs = -1;
@@ -38,15 +41,21 @@ public abstract class AbstractGlobalTrackGenerator {
 	
 	protected abstract Association findAssociation(LocalTrack ltrack);
 	
-	protected AbstractGlobalTrackGenerator(OverlapAreaRegistry areaRegistry) {
+	protected AbstractGlobalTrackGenerator(@Nullable OverlapAreaRegistry areaRegistry) {
 		m_areaRegistry = areaRegistry;
 	}
 	
 	public List<GlobalTrack> generate(NodeTrack track) {
-		OverlapArea area = m_areaRegistry.findByNodeId(track.getNodeId());
-		List<GlobalTrack> gtracks = (area != null) ? toOverlapAreaGlobalTracks(area, track)
-													: toNonOverlapAreaGlobalTracks(track);
-		return gtracks;
+		// NodeTrack 이벤트가 overlap area에 포함되었는지 여부에 따라
+		// global track을 생성하는 방법이 달라짐.
+		if ( m_areaRegistry == null ) {
+			return toNonOverlapAreaGlobalTracks(track);
+		}
+		else {
+			return m_areaRegistry.findByNodeId(track.getNodeId())
+									.map(area -> toOverlapAreaGlobalTracks(area, track))
+									.getOrElse(() -> toNonOverlapAreaGlobalTracks(track));
+		}
 	}
 
 	public List<GlobalTrack> closeGenerator() throws Exception {
@@ -152,7 +161,7 @@ public abstract class AbstractGlobalTrackGenerator {
 		// track과 관련된 association을 찾는다.
 		Association assoc = findAssociation(ltrack);
 
-		GlobalTrack gtrack =  GlobalTrack.from(ltrack, assoc, null);
+		GlobalTrack gtrack =  GlobalTrack.from(ltrack, assoc);
 		return Collections.singletonList(gtrack);	
 	}
 	
@@ -166,31 +175,33 @@ public abstract class AbstractGlobalTrackGenerator {
 	}
 	
 	private String getOverlapAreaId(LocalTrack ltrack) {
-		return Funcs.applyIfNotNull(m_areaRegistry.findByNodeId(ltrack.getNodeId()),
-									OverlapArea::getId, null);
+		return m_areaRegistry.findByNodeId(ltrack.getNodeId())
+								.map(OverlapArea::getId)
+								.getOrNull();
 	}
 	
 	private GlobalTrack average(Association assoc, List<LocalTrack> ltracks) {
-		OverlapArea area = m_areaRegistry.findByNodeId(ltracks.get(0).getNodeId());
-		String areaId = area != null ? area.getId() : null;
-		return GlobalTrack.from(assoc, ltracks, areaId);
+		String areaId = m_areaRegistry.findByNodeId(ltracks.get(0).getNodeId())
+										.map(OverlapArea::getId)
+										.getOrNull();
+		return GlobalTrack.from(assoc, ltracks);
 	}
 	
 	private GlobalTrack average(List<LocalTrack> ltracks) {
-		LocalTrack repr = Funcs.max(ltracks, LocalTrack::getTimestamp);
+		LocalTrack repr = Funcs.max(ltracks, LocalTrack::getTimestamp).get();
 		String id = repr.getKey();
 		Point avgLoc = GeoUtils.average(Funcs.map(ltracks, LocalTrack::getLocation));
-	
-		OverlapArea area = m_areaRegistry.findByNodeId(repr.getNodeId());
-		String areaId = area != null ? area.getId() : null;
 		
-		return new GlobalTrack(id, State.ISOLATED, areaId, avgLoc, null,
+		String areaId = m_areaRegistry.findByNodeId(ltracks.get(0).getNodeId())
+										.map(OverlapArea::getId)
+										.getOrNull();
+		return new GlobalTrack(id, State.ISOLATED, avgLoc, null,
 								repr.getFirstTimestamp(), repr.getTimestamp());
 	}
 	
 	private List<GlobalTrack> handleTrackletDeleted(Association assoc, List<LocalTrack> deleteds) {
 		if ( assoc == null ) {
-			return Funcs.map(deleteds, lt -> GlobalTrack.from(lt, assoc, getOverlapAreaId(lt)));
+			return Funcs.map(deleteds, lt -> GlobalTrack.from(lt, assoc));
 		}
 		
 		// Association에 참여하는 tracklet들의 delete 여부를 association별로 관리한다.
@@ -206,8 +217,8 @@ public abstract class AbstractGlobalTrackGenerator {
 			
 			// Association의 id와 소속 tracklet들 중에서 가장 마지막으로 종료된 tracklet의
 			// timestamp를 이용하여 deleted 이벤트를 생성한다.
-			LocalTrack last = Funcs.max(deleteds, LocalTrack::getTimestamp);
-			GlobalTrack gtrack = new GlobalTrack(assoc.getId(), State.DELETED, getOverlapAreaId(last),
+			LocalTrack last = Funcs.max(deleteds, LocalTrack::getTimestamp).get();
+			GlobalTrack gtrack = new GlobalTrack(assoc.getId(), State.DELETED,
 												null, null, assoc.getFirstTimestamp(), last.getTimestamp());
 			return Collections.singletonList(gtrack);
 		}

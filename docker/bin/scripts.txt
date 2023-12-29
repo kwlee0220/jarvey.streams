@@ -1,0 +1,13 @@
+
+
+REM =============================== [Format Kafka Topics and Databases] ===============================
+kafka-delete-records --bootstrap-server localhost:9092 --offset-json-file data/delete.json
+docker_jarvey format node_tracks_index
+docker_jarvey format track_features_index
+docker_jarvey format associations
+
+
+docker_jarvey build node_tracks_index
+docker_jarvey build track_features_index
+docker_jarvey build associations --config %JARVEY_STREAMS_HOME%/mcmot_configs_f5.yaml
+docker_jarvey build global_tracks --config %JARVEY_STREAMS_HOME%/mcmot_configs_f5.yaml

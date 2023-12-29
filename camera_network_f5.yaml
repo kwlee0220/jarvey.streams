@@ -1,0 +1,37 @@
+---
+"etri:01":
+   A:
+      - coming_from: ["etri:02", B]
+        transition_time: [0s, 5s]
+   B:
+      - coming_from: ["etri:07", A]
+        transition_time: [0s, 10s]
+      
+"etri:02":
+   A:
+      - coming_from: ["etri:04", A]
+        transition_time: [1s, 12s]
+      - coming_from: ["etri:06", A]
+        transition_time: [4s, 14s]
+   B:
+      - coming_from: ["etri:01", A]
+        transition_time: [0s, 5s]
+      
+"etri:04":
+   A:
+      - coming_from: ["etri:02", A]
+        transition_time: [1s, 12s]
+      - coming_from: ["etri:06", A]
+        transition_time: [4s, 18s]
+      
+"etri:06":
+   A:
+      - coming_from: ["etri:02", A]
+        transition_time: [4s, 14s]
+      - coming_from: ["etri:04", A]
+        transition_time: [4s, 18s]
+      
+"etri:07":
+   A:
+      - coming_from: ["etri:01", B]
+        transition_time: [0s, 10s]

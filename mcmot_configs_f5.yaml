@@ -1,0 +1,32 @@
+---
+kafka:
+   bootstrap-servers: localhost:9092
+topics:
+   node-tracks: node-tracks
+   track-features: track-features
+   tracklet-associateds: tracklet-associateds
+   global-tracks: global-tracks
+
+jdbc: postgresql:localhost:5432:dna:urc2004:dna
+tables:
+   node-tracks: node_tracks_index
+   track-features: track_features_index
+   tracklet-associateds: tracklet-associateds
+   associations: associations
+
+feature:
+   camera-network: camera_network_f5.yaml
+   listening-nodes:
+      - etri:01
+      - etri:02
+      - etri:04
+      - etri:06
+      - etri:07
+   match:
+      min-score: 0.3
+      top-percent: 0.15
+   
+output:
+   cache-size: 128
+   interval: 100ms
+   grace-time: 100ms

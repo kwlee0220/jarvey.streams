@@ -6,7 +6,6 @@ import javax.annotation.Nullable;
 
 import com.google.gson.annotations.SerializedName;
 
-import jarvey.streams.model.Range;
 import jarvey.streams.model.Timestamped;
 import jarvey.streams.model.TrackletId;
 import jarvey.streams.model.ZoneRelation;
@@ -20,32 +19,42 @@ public final class NodeTrackletIndex implements Timestamped {
 	@SerializedName("track_id") private String m_trackId;
 	@Nullable @SerializedName("enter_zone") private String m_enterZone;
 	@Nullable @SerializedName("exit_zone") private String m_exitZone;
-	@SerializedName("overlap_area") private String m_areaId;
-	@Nullable @SerializedName("association") private String m_association;
-	@SerializedName("ts_range") private Range<Long> m_tsRange;
+	@SerializedName("first_ts") private long m_firstTs;
+	@SerializedName("last_ts") private long m_lastTs;
 	@SerializedName("partition") private int m_partition;
-	@SerializedName("offset_range") private Range<Long> m_offsetRange;
+	@SerializedName("first_offset") private long m_firstOffset;
+	@SerializedName("last_offset") private long m_lastOffset;
 	@SerializedName("count") private int m_count;
 	
-	public NodeTrackletIndex(TrackletId trkId, long firstTs,  int partitioNo,
-							long firstOffset, int count) {
-		m_node = trkId.getNodeId();
-		m_trackId = trkId.getTrackId();
-		m_tsRange = Range.atLeast(firstTs);
+	NodeTrackletIndex(NodeTrack track,  int partitioNo, long firstOffset) {
+		m_node = track.getNodeId();
+		m_trackId = track.getTrackId();
+		m_firstTs = track.getFirstTimestamp();
+		m_lastTs = -1;
 		m_partition = partitioNo;
-		m_offsetRange = Range.atLeast(firstOffset);
-		m_count = count;
+		m_firstOffset = firstOffset;
+		m_lastOffset = -1;
+		m_count = 1;
+		
+		ZoneRelation rel = track.getZoneRelation();
+		if ( rel != null ) {
+			m_enterZone = rel.getZoneId();
+			m_exitZone = rel.getZoneId();
+		}
 	}
 	
-	public NodeTrackletIndex(String node, String trackId, String enterZone, String exitZone,
-							Range<Long> tsRange, int partitioNo, Range<Long> offsetRange, int count) {
+	NodeTrackletIndex(String node, String trackId, String enterZone, String exitZone,
+						long firstTs, long lastTs,
+						int partitioNo, long firstOffset, long lastOffset, int count) {
 		m_node = node;
 		m_trackId = trackId;
 		m_enterZone = enterZone;
 		m_exitZone = exitZone;
+		m_firstTs = firstTs;
+		m_lastTs = lastTs;
 		m_partition = partitioNo;
-		m_offsetRange = offsetRange;
-		m_tsRange = tsRange;
+		m_firstOffset = firstOffset;
+		m_lastOffset = lastOffset;
 		m_count = count;
 	}
 	
@@ -69,48 +78,34 @@ public final class NodeTrackletIndex implements Timestamped {
 		return m_exitZone;
 	}
 	
-	public String getOverlapAreaId() {
-		return m_areaId;
+	public long getFirstTimestamp() {
+		return m_firstTs;
 	}
 	
-	public String getAssociation() {
-		return m_association;
-	}
-	
-	public Range<Long> getTimestampRange() {
-		return m_tsRange;
+	public long getLastTimestamp() {
+		return m_lastTs;
 	}
 	
 	public int getPartitionNumber() {
 		return m_partition;
 	}
 	
-	public Range<Long> getTopicOffsetRange() {
-		return m_offsetRange;
+	public long getFirstTopicOffset() {
+		return m_firstOffset;
+	}
+	
+	public long getLastTopicOffset() {
+		return m_lastOffset;
 	}
 
 	@Override
 	public long getTimestamp() {
-		return m_tsRange.max();
+		return m_lastTs;
 	}
 	
 	public int getUpdateCount() {
 		return m_count;
 	}
-	
-	public boolean isClosed() {
-		return !m_offsetRange.isInfiniteMax();
-	}
-	
-//	private String parseZone(NodeTrack track) {
-//		ZoneRelation zoneRel = ZoneRelation.parse(track.getZoneRelation());
-//		switch ( zoneRel.getRelation()  ) {
-//			case Entered: case Inside: case Through: case Left:
-//				return zoneRel.getZoneId();
-//			default:
-//				return null;
-//		}
-//	}
 	
 	boolean update(NodeTrack track) {
 		boolean zoneUpdated = false;
@@ -123,8 +118,9 @@ public final class NodeTrackletIndex implements Timestamped {
 					m_enterZone = zoneId;
 					zoneUpdated = true;
 				}
-				if ( m_exitZone == null || !m_exitZone.equals(zoneId) ) {
+				if ( !zoneId.equals(m_exitZone) ) {
 					m_exitZone = zoneId;
+					zoneUpdated = true;
 				}
 			}
 		}
@@ -133,15 +129,9 @@ public final class NodeTrackletIndex implements Timestamped {
 		return zoneUpdated;
 	}
 	
-	void setLastUpdate(long lastTs, long lastOffset) {
-		m_tsRange.expand(lastTs);
-		m_offsetRange.expand(lastOffset);
-		m_count += 1;
-	}
-	
-	public void setMotionAssociation(String areaId, String association) {
-		m_areaId = areaId;
-		m_association = association;
+	void lastUpdate(NodeTrack track, long lastOffset) {
+		m_lastOffset = lastOffset;
+		m_lastTs = track.getTimestamp();
 	}
 	
 	@Override
@@ -164,8 +154,12 @@ public final class NodeTrackletIndex implements Timestamped {
 	
 	@Override
 	public String toString() {
-		return String.format("%s: {part=%d, offsets=%s, ts=%s, zone=%s->%s, length=%d}",
-								getTrackletId(), m_partition, m_offsetRange, m_tsRange,
-								m_enterZone, m_exitZone, m_count);
+		String enterZone = (m_enterZone != null) ? m_enterZone : "?";
+		String exitZone = (m_exitZone != null) ? m_exitZone : "?";
+		
+		return String.format("%s: {zone=%s->%s, ts=[%d:%d], offsets=%d[%d:%d], count=%d}",
+								getTrackletId(), enterZone, exitZone,
+								m_firstTs, m_lastTs,
+								m_partition, m_firstOffset, m_lastOffset, m_count);
 	}
 }

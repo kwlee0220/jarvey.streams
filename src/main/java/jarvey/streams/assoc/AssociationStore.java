@@ -13,19 +13,22 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import utils.func.Funcs;
-import utils.func.Tuple;
 import utils.jdbc.JdbcProcessor;
+import utils.jdbc.JdbcRowSource;
 import utils.stream.FStream;
 
 import jarvey.streams.model.TrackletId;
 import jarvey.streams.serialization.json.GsonUtils;
+
+import io.reactivex.rxjava3.core.Observable;
 
 /**
  *
  * @author Kang-Woo Lee (ETRI)
  */
 public class AssociationStore implements KeyValueMapper<String, Association, KeyValue<String, Association>> {
-	private static final Logger s_logger = LoggerFactory.getLogger(AssociationStore.class);
+	private static final Logger s_logger
+			= LoggerFactory.getLogger(AssociationStore.class.getPackage().getName() + ".store");
 
 	private final JdbcProcessor m_jdbc;
 
@@ -39,10 +42,20 @@ public class AssociationStore implements KeyValueMapper<String, Association, Key
 		return KeyValue.pair(expanded.getId(), expanded);
 	}
 
+	public Association getAssociation(String assocId) throws SQLException {
+		try (Connection conn = m_jdbc.connect()) {
+			return readAssociation(conn, assocId);
+		}
+	}
+
 	public Association getAssociation(TrackletId trkId) throws SQLException {
 		try (Connection conn = m_jdbc.connect()) {
 			return readAssociation(conn, trkId);
 		}
+	}
+	
+	public Observable<Association> rxGetAssociation(TrackletId trkId) {
+		return Observable.fromCallable(() -> getAssociation(trkId));
 	}
 
 	public Association addAssociation(Association closedAssoc) {
@@ -55,7 +68,10 @@ public class AssociationStore implements KeyValueMapper<String, Association, Key
 			// association들을 찾아 collection에 삽입한다.
 			List<Record> records = readAssociations(conn, closedAssoc.getTracklets());
 
-			FStream.from(records).map(Record::getAssociation).distinct(Association::getId).cast(Association.class)
+			FStream.from(records)
+					.map(Record::getAssociation)
+					.distinct(Association::getId)
+					.cast(Association.class)
 					.forEach(coll::add);
 
 			// 새로 추가할 association도 collection에 추가한다.
@@ -65,8 +81,10 @@ public class AssociationStore implements KeyValueMapper<String, Association, Key
 			AssociationCollection bestAssocs = coll.getBestAssociations("tmp");
 			Association best = Funcs.getFirst(bestAssocs);
 			if ( bestAssocs.size() != 1 && s_logger.isInfoEnabled() ) {
-				String losers = FStream.from(bestAssocs).drop(1)
-						.map(a -> String.format("%s(%.3f)", a.getTrackletsString(), a.getScore())).join(',');
+				String losers = FStream.from(bestAssocs)
+										.drop(1)
+										.map(a -> String.format("%s(%.3f)", a.getTrackletsString(), a.getScore()))
+										.join(',');
 				String winner = String.format("%s(%.3f)", best.getTrackletsString(), best.getScore());
 				s_logger.info("select the best assoc: {} than {}", winner, losers);
 			}
@@ -91,9 +109,21 @@ public class AssociationStore implements KeyValueMapper<String, Association, Key
 		}
 	}
 
+	private Association readAssociation(Connection conn, String assocId) throws SQLException {
+		String sqlStrFormat = "select json " + "from associations where id = '%s'";
+		String sqlStr = String.format(sqlStrFormat, assocId);
+		ResultSet rs = m_jdbc.executeQuery(sqlStr);
+		if ( rs.next() ) {
+			return GsonUtils.parseJson(rs.getString(1), Association.class);
+		}
+		else {
+			return null;
+		}
+	}
+
 	private Association readAssociation(Connection conn, TrackletId trkId) throws SQLException {
 		String sqlStrFormat = "select a.json " + "from associated_tracklets t, associations a "
-				+ "where t.association = a.id " + "and t.id = '%s'";
+								+ "where t.association = a.id " + "and t.id = '%s'";
 		String sqlStr = String.format(sqlStrFormat, trkId.toString());
 		ResultSet rs = m_jdbc.executeQuery(sqlStr);
 		if ( rs.next() ) {
@@ -104,37 +134,70 @@ public class AssociationStore implements KeyValueMapper<String, Association, Key
 		}
 	}
 
+	/**
+	 * 주어진 tracklet 식별자들이 포함된 association들을 검색하여,
+	 * (association, tracklet_id)로 구성된 record 객체들의 리스트를 반환함.
+	 * 
+	 * @param conn
+	 * @param trkIds	검색 대상 tracklet 식별자 리스트.
+	 * @return
+	 * @throws SQLException
+	 */
 	private List<Record> readAssociations(Connection conn, Iterable<TrackletId> trkIds) throws SQLException {
-		String sqlStrFormat = "select t.id, a.json " + "from associated_tracklets t, associations a "
-				+ "where t.association = a.id " + "and t.id in (%s)";
-		String inLiteral = FStream.from(trkIds).map(tid -> String.format("'%s'", tid.toString())).join(',');
+		String sqlStrFormat = "select t.id, a.json "
+								+ "from associated_tracklets t, associations a "
+								+ "where t.association = a.id "
+								+ "and t.id in (%s)";
+		String inLiteral = FStream.from(trkIds)
+								.map(tid -> String.format("'%s'", tid.toString()))
+								.join(',');
 		String sqlStr = String.format(sqlStrFormat, inLiteral);
-		return m_jdbc.streamQuery(conn, sqlStr).mapOrIgnore(rs -> Tuple.of(rs.getString(1), rs.getString(2)))
-				.groupByKey(t -> t._2, t -> t._1).stream()
-				.mapKey((json, v) -> GsonUtils.parseJson(json, Association.class))
-				.flatMap((assoc, ids) -> toRecordStream(assoc, ids)).toList();
+		
+		return JdbcRowSource.selectAsTuple2()
+							.from(conn)
+							// (tracklet_id, association_json)
+							.executeQuery(sqlStr)
+							.fstream()
+							// 동일 association 경우에는 json이 동일하므로, json을 기준으로 groupby 수행.
+							.groupByKey(t -> (String)t._2, t -> (String)t._1)
+							// association별로 소속 tracklet_id들의 리스트 생성됨.
+							.stream()
+							.mapKey((json, v) -> GsonUtils.parseJson(json, Association.class))
+							.flatMap((assoc, ids) -> toRecordStream(assoc, ids))
+							.toList();
 	}
 
 	private FStream<Record> toRecordStream(Association assoc, List<String> tids) {
-		return FStream.from(tids).map(TrackletId::fromString).map(trkId -> new Record(trkId, assoc));
+		return FStream.from(tids)
+					.map(TrackletId::fromString)
+					.map(trkId -> new Record(trkId, assoc));
 	}
 
 	private void writeAssociation(Connection conn, Association assoc) throws SQLException {
-		// 이전 association 정보를 제거한다.
+		// Association에 포함된 tracklet들이 이전에 포함된 association 정보를 모두 삭제한다. 
 		String deleteAssocSqlFormat = "delete from associations where id in (%s)";
-		String inLiteral = FStream.from(assoc.getTracklets()).map(tid -> String.format("'%s'", tid.toString()))
-				.join(',');
+		String inLiteral = FStream.from(assoc.getTracklets())
+									.map(tid -> String.format("'%s'", tid.toString()))
+									.join(',');
 		String deleteSqlStr = String.format(deleteAssocSqlFormat, inLiteral);
 		try (Statement stmt = conn.createStatement()) {
 			stmt.execute(deleteSqlStr);
 		}
 
 		// 새 association 정보를 삽입한다.
-		String trkIdsStr = FStream.from(assoc.getTracklets()).map(TrackletId::toString).sort().join('-');
+		String trkIdsStr = FStream.from(assoc.getTracklets())
+									.map(TrackletId::toString)
+									.sort()
+									.join('-');
 		String json = GsonUtils.toJson(assoc);
-		String insertAssocSql = "insert into associations(id, tracklets_str, json, first_ts, ts) "
-				+ "values (?, ?, ?, ?, ?) " + "on conflict(id) do update " + "set tracklets_str = ?, " + "json = ?, "
-				+ "first_ts = ?, " + "ts = ?";
+		String insertAssocSql
+			= "insert into associations(id, tracklets_str, json, first_ts, ts) "
+				+ "values (?, ?, ?, ?, ?) "
+				+ "on conflict(id) do update "
+				+ "set tracklets_str = ?, "
+					+ "json = ?, "
+					+ "first_ts = ?,"
+					+ "ts = ?";
 		try (PreparedStatement pstmt = conn.prepareStatement(insertAssocSql)) {
 			pstmt.setString(1, assoc.getId());
 			pstmt.setString(2, trkIdsStr);

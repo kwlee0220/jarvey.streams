@@ -1,0 +1,47 @@
+version: "3.1"
+name: jarvey-streams
+
+services:
+  build_node_tracks_index:
+    image: kwlee0220/jarvey.streams
+    container_name: build_node_tracks_index
+    volumes:
+      - ./jarvey:/jarvey
+    network_mode: host
+    environment:
+      JARVEY_STREAMS_HOME: "/jarvey"
+      log4j.configurationFile: "/jarvey/log4j2.xml"
+    command: java -cp /jarvey.streams.jar jarvey.streams.assoc.tool.BuildNodeTracksIndexMain
+    
+  build_track_features_index:
+    image: kwlee0220/jarvey.streams
+    container_name: build_track_features_index
+    volumes:
+      - ./jarvey:/jarvey
+    network_mode: host
+    environment:
+      JARVEY_STREAMS_HOME: "/jarvey"
+      log4j.configurationFile: "/jarvey/log4j2.xml"
+    command: java -cp /jarvey.streams.jar jarvey.streams.assoc.tool.BuildTrackFeaturesIndexMain
+    
+  associate_tracklets:
+    image: kwlee0220/jarvey.streams
+    container_name: associate_tracklets
+    volumes:
+      - ./jarvey:/jarvey
+    network_mode: host
+    environment:
+      JARVEY_STREAMS_HOME: "/jarvey"
+      log4j.configurationFile: "/jarvey/log4j2.xml"
+    command: java -cp /jarvey.streams.jar jarvey.streams.assoc.tool.AssociateTrackletMain
+    
+  build_global_tracks:
+    image: kwlee0220/jarvey.streams
+    container_name: build_global_tracks
+    volumes:
+      - ./jarvey:/jarvey
+    network_mode: host
+    environment:
+      JARVEY_STREAMS_HOME: "/jarvey"
+      log4j.configurationFile: "/jarvey/log4j2.xml"
+    command: java -cp /jarvey.streams.jar jarvey.streams.assoc.tool.BuildGlobalTracksMain

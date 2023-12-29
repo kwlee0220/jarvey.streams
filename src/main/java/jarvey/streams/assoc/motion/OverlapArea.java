@@ -1,5 +1,7 @@
 package jarvey.streams.assoc.motion;
 
+import static utils.Utilities.checkState;
+
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -29,13 +31,21 @@ public class OverlapArea {
 	public static OverlapArea parse(Map<String,Object> entries) {
 		OverlapArea area = new OverlapArea((String)entries.get("id"));
 		
-		Object bindings = entries.get("bindings");
-		FStream.from((List<List<String>>)bindings)
+		Object overlaps = entries.get("bindings");
+		for ( List<String> pair: (List<List<String>>)overlaps) {
+			checkState(pair.size() == 2, () -> String.format("Invalid overlap pair: %s", pair));
+			area.addOverlap(pair.get(0), pair.get(1));
+		}
+		
+		FStream.from((List<List<String>>)overlaps)
 				.forEach(bd -> area.addOverlap(bd.get(0), bd.get(1)));
 
-		KVFStream.from((Map<String,Object>)entries.get("distance_threshold"))
-				.mapValue(DataUtils::asDouble)
-				.forEach(area::addDistanceThreshold);
+		Map<String,Object> distanceMap = (Map<String,Object>)entries.get("distance_threshold");
+		if ( distanceMap != null ) {
+			KVFStream.from(distanceMap)
+					.mapValue(DataUtils::asDouble)
+					.forEach(area::addDistanceThreshold);
+		}
 		
 		return area;
 	}

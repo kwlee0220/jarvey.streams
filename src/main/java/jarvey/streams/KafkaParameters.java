@@ -1,6 +1,8 @@
 package jarvey.streams;
 
-import java.time.Duration;
+import static utils.Utilities.checkArgument;
+
+import java.util.Collections;
 import java.util.Properties;
 import java.util.concurrent.ExecutionException;
 
@@ -12,58 +14,84 @@ import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.Topology.AutoOffsetReset;
 
 import utils.UnitUtils;
+import utils.func.FOption;
 
 import picocli.CommandLine.Option;
+
 
 /**
  *
  * @author Kang-Woo Lee (ETRI)
  */
 public class KafkaParameters {
-	private String m_bootstrapServers = "localhost:9092";
-	private String m_clientId = null;
+	private static final String DEFAULT_BOOTSTRAP_SERVERS = "localhost:9092";
+	
+	private FOption<String> m_oclientId = FOption.empty();
+	private FOption<String> m_ogroupId = FOption.empty();
+	private FOption<String> m_oappId = FOption.empty();
+	
+	private FOption<String> m_bootstrapServers = FOption.empty();
 	private String m_autoOffset = "latest";
 	private boolean m_enableAutoCommit = false;
 	
-	private Duration m_pollTimeout = Duration.ofSeconds(3);
-	private Duration m_initialPollTimeout = Duration.ofSeconds(10);
-	
-//	private String m_keySerializer = StringSerializer.class.getName();
-//	private String m_valueSerializer = ByteArraySerializer.class.getName();
-//	private String m_keyDeserializer = StringDeserializer.class.getName();
-//	private String m_valueDeserializer = ByteArrayDeserializer.class.getName();
 	private String m_keySerdeClassName = Serdes.String().getClass().getName();
 	private String m_valueSerdeClassName = Serdes.ByteArray().getClass().getName();
 	
-	private long m_maxPollIntervalMs = -1;
-	private int m_maxPollRecords = -1;
+	// 명시적으로 지정된 경우 해당 기간동안 kafka client poll()를 호출하지 않으면
+	// Kafka broker는 해당 client가 단절되었다고 가정하고 rebalancing을 시도한다.
+	// 기본값은 5분임.
+	private FOption<Long> m_maxPollIntervalMs = FOption.empty();
+	// 컨슈머가 최대로 가져 갈 수있는 갯수.
+	// 기본값은 500임.
+	private FOption<Integer> m_maxPollRecords = FOption.empty();
 	
-	public String getBootstrapServers() {
+	public FOption<String> getBootstrapServers() {
 		return m_bootstrapServers;
 	}
+	public String getBootstrapServersOrDefault() {
+		return m_bootstrapServers.getOrElse(DEFAULT_BOOTSTRAP_SERVERS);
+	}
 	
-	@Option(names={"--bootstrap-servers"},
+	@Option(names={"--bootstrap_servers"},
 			paramLabel="kafka boostrap servers",
 			description={"Kafka bootstrap servers, (default: localhost:9092)"})
 	public void setBootstrapServers(String servers) {
-		m_bootstrapServers = servers;
+		m_bootstrapServers = FOption.ofNullable(servers);
 	}
 
-	public String getClientId() {
-		return m_clientId;
+	public FOption<String> getClientId() {
+		return m_oclientId;
 	}
 	
-	@Option(names={"--client-id"}, paramLabel="Kafka client id")
-	public void setClientId(String appId) {
-		m_clientId = appId;
+	@Option(names={"--client-id"}, paramLabel="id", description={"Kafka client id"})
+	public void setClientId(String clientId) {
+		m_oclientId = FOption.ofNullable(clientId);
 	}
 
-	public AutoOffsetReset getAutoOffsetReset() {
+	public FOption<String> getGroupId() {
+		return m_ogroupId;
+	}
+	
+	@Option(names={"--group_id"}, paramLabel="id", description={"Kafka group id"})
+	public void setGroupId(String grpId) {
+		m_ogroupId = FOption.ofNullable(grpId);
+	}
+
+	public FOption<String> getApplicationId() {
+		return m_oappId;
+	}
+	
+	@Option(names={"--app_id"}, paramLabel="id", description={"KafkaStreams application id"})
+	public void setApplicationId(String appId) {
+		m_oappId = FOption.ofNullable(appId);
+	}
+
+	public AutoOffsetReset getKafkaOfffset() {
 		return AutoOffsetReset.valueOf(m_autoOffset.toUpperCase());
 	}
 	
-	@Option(names={"--auto-offset-reset"}, paramLabel="offset")
-	public void setAutoOffsetReset(String offsetStr) {
+	@Option(names={"--kafka_offset"}, paramLabel="offset")
+	public void setKafkaOffset(String offsetStr) {
 		m_autoOffset = offsetStr;
 	}
 	
@@ -71,32 +99,16 @@ public class KafkaParameters {
 		return m_enableAutoCommit;
 	}
 	
-	@Option(names={"--enable-auto-commit"})
+	@Option(names={"--enable_auto_commit"})
 	public void setEnableAutoCommit(boolean flag) {
 		m_enableAutoCommit = flag;
-	}
-
-	public Duration getPollTimeout() {
-		return m_pollTimeout;
-	}
-	@Option(names={"--poll-timeout"}, paramLabel="duration", description="default: '3s'")
-	public void setPollTimeout(String durStr) {
-		m_pollTimeout = Duration.ofMillis(UnitUtils.parseDurationMillis(durStr));
-	}
-
-	public Duration getInitialPollTimeout() {
-		return m_initialPollTimeout;
-	}
-	@Option(names={"--initial-poll-timeout"}, paramLabel="duration", description="default: '10s'")
-	public void setInitialPollTimeout(String durStr) {
-		m_initialPollTimeout = Duration.ofMillis(UnitUtils.parseDurationMillis(durStr));
 	}
 
 	public String getKeySerde() {
 		return m_keySerdeClassName;
 	}
 	
-	@Option(names={"--key-serde"}, paramLabel="class name", description="default: Serdes.String")
+	@Option(names={"--key_serde"}, paramLabel="class name", description="default: Serdes.String")
 	public void setKeySerde(String className) {
 		m_keySerdeClassName = className;
 	}
@@ -105,74 +117,29 @@ public class KafkaParameters {
 		return m_valueSerdeClassName;
 	}
 	
-	@Option(names={"--value-serde"}, paramLabel="class name",
+	@Option(names={"--value_serde"}, paramLabel="class name",
 			description="default: org.apache.kafka.common.serialization.ByteArraySerializer")
 	public void setValueSerde(String className) {
 		m_valueSerdeClassName = className;
 	}
-	
-//	@Option(names={"--key-deserializer"}, paramLabel="class name",
-//			description="default: org.apache.kafka.common.serialization.StringDeserializer")
-//	public void setKeyDeserializer(String className) {
-//		m_keyDeserializer = className;
-//	}
-//
-//	public String getKeyDeserializer() {
-//		return m_keyDeserializer;
-//	}
-//	
-//	@Option(names={"--key-deserializer"}, paramLabel="class name",
-//			description="default: org.apache.kafka.common.serialization.StringDeserializer")
-//	public void setKeyDeserializer(String className) {
-//		m_keyDeserializer = className;
-//	}
-//
-//	public String getValueDeserializer() {
-//		return m_valueDeserializer;
-//	}
-//	
-//	@Option(names={"--value-deserializer"}, paramLabel="class name",
-//			description="default: org.apache.kafka.common.serialization.ByteArrayDeserializer")
-//	public void setValueDeserializer(String className) {
-//		m_valueDeserializer = className;
-//	}
-//
-//	public String getKeySerializer() {
-//		return m_keySerializer;
-//	}
-//	
-//	@Option(names={"--key-serializer"}, paramLabel="class name",
-//			description="default: org.apache.kafka.common.serialization.StringSerializer")
-//	public void setKeySerializer(String className) {
-//		m_keySerializer = className;
-//	}
-//
-//	public String getValueSerializer() {
-//		return m_valueSerializer;
-//	}
-//	
-//	@Option(names={"--value-serializer"}, paramLabel="class name",
-//			description="default: org.apache.kafka.common.serialization.ByteArraySerializer")
-//	public void setValueSerializer(String className) {
-//		m_valueSerializer = className;
-//	}
 
-	public long getMaxPollInterval() {
+	public FOption<Long> getMaxPollInterval() {
 		return m_maxPollIntervalMs;
 	}
 	
-	@Option(names={"--max.poll.interval"}, paramLabel="interval")
+	@Option(names={"--max_poll_interval"}, paramLabel="interval")
 	public void setMaxPollInterval(String intvlStr) {
-		m_maxPollIntervalMs = UnitUtils.parseDurationMillis(intvlStr);
+		m_maxPollIntervalMs = FOption.of(UnitUtils.parseDurationMillis(intvlStr));
 	}
 
-	public int getMaxPollRecords() {
+	public FOption<Integer> getMaxPollRecords() {
 		return m_maxPollRecords;
 	}
 	
-	@Option(names={"--max.poll.records"}, paramLabel="count")
+	@Option(names={"--max_poll_records"}, paramLabel="count")
 	public void setMaxPollRecords(int count) {
-		m_maxPollRecords = count;
+		checkArgument(count > 0, "invalid value: " + count);
+		m_maxPollRecords = FOption.of(count);
 	}
 	
 	@SuppressWarnings({ "rawtypes", "unchecked" })
@@ -198,7 +165,8 @@ public class KafkaParameters {
 				valueSerializerClassName = serdeCls.newInstance().serializer().getClass().getName();
 			}
 			
-			props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, m_bootstrapServers);
+			String bootstrapServers = m_bootstrapServers.getOrElse(DEFAULT_BOOTSTRAP_SERVERS);
+			props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
 			props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, keySerializerClassName);
 			props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, valueSerializerClassName);
 			
@@ -231,22 +199,23 @@ public class KafkaParameters {
 				Class<Serde> serdeCls = (Class<Serde>)Class.forName(m_valueSerdeClassName);
 				valueDeserializerClassName = serdeCls.newInstance().deserializer().getClass().getName();
 			}
-			
-			props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, m_bootstrapServers);
-			
-			String clientId = (m_clientId != null) ? m_clientId : Long.toHexString(System.nanoTime());
-			props.put(ConsumerConfig.GROUP_ID_CONFIG, clientId);
+
+			String bootstrapServers = m_bootstrapServers.getOrElse(DEFAULT_BOOTSTRAP_SERVERS);
+			props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+
+			m_ogroupId
+				.ifPresent(id -> props.put(ConsumerConfig.GROUP_ID_CONFIG, id))
+				.ifAbsent(() -> {
+					String id = m_oclientId.getOrElse(() -> Long.toHexString(System.nanoTime()));
+					props.put(ConsumerConfig.GROUP_ID_CONFIG, id);
+				});
 			props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, m_autoOffset);
-			props.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, ""+m_enableAutoCommit);
+			props.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, m_enableAutoCommit);
 			props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, keyDeserializerClassName);
 			props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, valueDeserializerClassName);
 			
-			if ( m_maxPollIntervalMs > 0 ) {
-				props.put(ConsumerConfig.MAX_POLL_INTERVAL_MS_CONFIG, m_maxPollIntervalMs);
-			}
-			if ( m_maxPollRecords > 0 ) {
-				props.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, m_maxPollRecords);
-			}
+			m_maxPollIntervalMs.ifPresent(mills -> props.put(ConsumerConfig.MAX_POLL_INTERVAL_MS_CONFIG, mills));
+			m_maxPollRecords.ifPresent(cnt -> props.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, cnt));
 			
 			return props;
 		}
@@ -258,24 +227,34 @@ public class KafkaParameters {
 	public Properties toStreamProperties() {
 		Properties props = new Properties();
 
-		String clientId = (m_clientId != null) ? m_clientId : Long.toHexString(System.nanoTime());
-		props.put(StreamsConfig.APPLICATION_ID_CONFIG, clientId);
-		props.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, m_bootstrapServers);
+		String bootstrapServers = m_bootstrapServers.getOrElse(DEFAULT_BOOTSTRAP_SERVERS);
+		String appId = m_oappId.orElse(m_ogroupId)
+								.orElse(m_oclientId)
+								.getOrElse(() -> Long.toHexString(System.nanoTime()));
+		props.put(StreamsConfig.APPLICATION_ID_CONFIG, appId);
+		props.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
 		props.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, m_keySerdeClassName);
 		props.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, m_valueSerdeClassName);
-		if ( m_maxPollRecords > 0 ) {
-			props.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, m_maxPollRecords);
-		}
+		m_maxPollIntervalMs.ifPresent(mills -> props.put(ConsumerConfig.MAX_POLL_INTERVAL_MS_CONFIG, mills));
+		m_maxPollRecords.ifPresent(cnt -> props.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, cnt));
 		
 		return props;
 	}
 	
 	public void deleteConsumerGroup() throws InterruptedException, ExecutionException {
-		if ( getClientId() == null ) {
+		FOption<String> ogrpId = getGroupId();
+		if ( ogrpId.isPresent() ) {
+			String bootstrapServers = m_bootstrapServers.getOrElse(DEFAULT_BOOTSTRAP_SERVERS);
+			deleteConsumerGroup(bootstrapServers, ogrpId.get());
+		}
+		else {
 			throw new IllegalArgumentException("client-id is not specified");
 		}
-		
-		KafkaAdmins admin = new KafkaAdmins(getBootstrapServers());
-		admin.deleteConsumerGroup(getClientId());
+	}
+	
+	public static void deleteConsumerGroup(String bootstrapServer, String grpId)
+		throws InterruptedException, ExecutionException {
+		KafkaAdmins admin = new KafkaAdmins(bootstrapServer);
+		admin.deleteConsumerGroups(Collections.singletonList(grpId));
 	}
 }

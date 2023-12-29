@@ -1,0 +1,27 @@
+---
+kafka:
+   bootstrap-servers: localhost:9092
+   topics:
+      node-tracks: node-tracks
+      track-features: track-features
+      global-tracks: global-tracks
+
+jdbc: postgresql:localhost:5432:dna:urc2004:dna
+tables:
+   associations: associations
+   node-tracks: node_tracks_index
+   track-features: track_features_index
+   tracklet-associateds: tracklet-associateds
+
+motion:
+   overlap-area: overlap_areas_m.yaml
+   match:
+      window-size: 1s
+      advance-time: 500ms
+      max-distance: 8m
+   
+output:
+   topic: global-tracks
+   interval: 100ms
+   grace_time: 100ms
+

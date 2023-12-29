@@ -5,10 +5,10 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.Set;
 
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.serialization.Deserializer;
@@ -19,10 +19,10 @@ import com.google.common.collect.Maps;
 import utils.jdbc.JdbcProcessor;
 import utils.stream.FStream;
 
-import jarvey.streams.ConsumerRecordStream;
 import jarvey.streams.model.JarveySerdes;
-import jarvey.streams.model.Range;
 import jarvey.streams.model.TrackletId;
+import jarvey.streams.rx.KafkaPoller;
+import jarvey.streams.rx.KafkaUtils;
 
 
 /**
@@ -86,48 +86,31 @@ public class NodeTrackletUpdateLogs {
 	}
 	
 	public FStream<KeyValue<String,NodeTrack>> streamOfKey(TrackletId key) {
-		return streamOfIndex(getIndex(key));
+		return streamUpdatesOfIndex(getIndex(key));
 	}
 	
-	public FStream<KeyValue<String,NodeTrack>> streamOfKeys(Iterable<TrackletId> keys) {
-		return streamOfIndexes(readIndexes(keys).values());
-	}
-	
-	public FStream<KeyValue<String,NodeTrack>> streamOfIndex(NodeTrackletIndex index) {
+	/**
+	 * 주어진 {@link NodeTrackletIndex}에 해당하는 {@link NodeTrack} 이벤트 스트림을 반환한다.
+	 * 
+	 * @param index	대상 node tracklet 인덱스.
+	 * @return	대상 node tracklet에 해당하는 {@link NodeTrack} 이벤트와 해당 Kafka key pair 스트림.
+	 */
+	public FStream<KeyValue<String,NodeTrack>> streamUpdatesOfIndex(NodeTrackletIndex index) {
 		TopicPartition tpart = new TopicPartition(m_topic, index.getPartitionNumber());
-		ConsumerRecordStream stream 
-			= ConsumerRecordStream.from(m_consumerProps)
-									.addRange(tpart, index.getTopicOffsetRange())
-									.build();
-		
-		return stream.map(rec -> KeyValue.pair(rec.key(), m_deserializer.deserialize(rec.topic(), rec.value())))
-					.filter(kv -> index.getTrackletId().equals(kv.value.getTrackletId()));
-	}
-	
-	public FStream<KeyValue<String,NodeTrack>> streamOfIndexes(Iterable<NodeTrackletIndex> indexes) {
-		Set<TrackletId> keys = FStream.from(indexes).map(NodeTrackletIndex::getTrackletId).toSet();
-		
-		ConsumerRecordStream.Builder builder = ConsumerRecordStream.from(m_consumerProps);
-		for ( NodeTrackletIndex idx: indexes ) {
-			builder.addRange(new TopicPartition(m_topic, idx.getPartitionNumber()),
-							idx.getTopicOffsetRange());
-		}
-		ConsumerRecordStream stream = builder.build();
-		
-		return stream.map(rec -> KeyValue.pair(rec.key(), m_deserializer.deserialize(rec.topic(), rec.value())))
-					.filter(kv -> keys.contains(kv.value.getTrackletId()));
+		long firstOffset = index.getFirstTopicOffset();
+		long lastOffset = index.getLastTopicOffset();
+		KafkaPoller poller = KafkaPoller.infinite(Duration.ofSeconds(5));
+		return KafkaUtils
+				.<String,byte[]>streamKafkaTopicPartions(m_consumerProps, tpart, firstOffset, poller)
+				.takeWhile(rec -> rec.offset() <= lastOffset)
+				.map(rec -> KeyValue.pair(rec.key(),
+						m_deserializer.deserialize(rec.topic(), rec.value())))
+				.filter(kv -> index.getTrackletId().equals(kv.value.getTrackletId()));
 	}
 	
 	public List<NodeTrackletIndex> findIndexes(String whereClause) {
 		String sqlString = String.format("select * from %s where %s", m_idxTableName, whereClause);
-		try ( Connection conn = m_jdbc.connect() ) {
-			return m_jdbc.streamQuery(sqlString)
-							.mapOrThrow(this::readIndex)
-							.toList();
-		}
-		catch ( SQLException e ) {
-			throw new RuntimeException(e);
-		}
+		return m_jdbc.streamQuery(sqlString, NodeTrackletUpdateLogs::readIndex).toList();
 	}
 	
 	private Map<TrackletId,NodeTrackletIndex> readIndexes(Iterable<TrackletId> keys) {
@@ -154,7 +137,7 @@ public class NodeTrackletUpdateLogs {
 		}
 	}
 	
-	private NodeTrackletIndex readIndex(ResultSet rs) throws SQLException {
+	public static NodeTrackletIndex readIndex(ResultSet rs) throws SQLException {
 		String node = rs.getString(1);
 		String trackId = rs.getString(2);
 		
@@ -162,16 +145,15 @@ public class NodeTrackletUpdateLogs {
 		String exitZone = rs.getString(4);
 
 		long minTs = rs.getLong(5);
-		Long maxTs = (rs.getLong(6) != -1) ? rs.getLong(6) : null;
+		Long maxTs = rs.getLong(6);
 		int partNo = rs.getInt(7);
 		long minOffset = rs.getLong(8);
-		Long maxOffset = (rs.getLong(9) != -1) ? rs.getLong(9) : null;
+		Long maxOffset = rs.getLong(9);
 		int count = rs.getInt(10);
 		
 		NodeTrackletIndex index = new NodeTrackletIndex(node, trackId, enterZone, exitZone,
-														Range.between(minTs, maxTs),
-														partNo,
-														Range.between(minOffset, maxOffset),
+														minTs, maxTs,
+														partNo, minOffset, maxOffset,
 														count);
 		return index;
 	}
@@ -182,8 +164,6 @@ public class NodeTrackletUpdateLogs {
 		+ 	"track_id varchar not null, "	// 2
 		+ 	"enter_zone varchar, "			// 3
 		+ 	"exit_zone varchar, "			// 4
-//		+ 	"overlap_area varchar, "		// 5
-//		+ 	"association varchar, "			// 6
 		+ 	"first_ts bigint not null, "	// 5
 		+ 	"last_ts bigint not null, "		// 6
 		+ 	"partition integer not null, "		// 7

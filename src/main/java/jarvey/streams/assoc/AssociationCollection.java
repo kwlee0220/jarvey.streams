@@ -5,6 +5,10 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Predicate;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -22,6 +26,8 @@ import jarvey.streams.model.TrackletId;
  * @author Kang-Woo Lee (ETRI)
  */
 public class AssociationCollection implements Iterable<Association>  {
+	private static final Logger s_logger = LoggerFactory.getLogger(AssociationCollection.class);
+	
 	private final String m_id;
 	private final List<Association> m_associations;
 	
@@ -30,7 +36,7 @@ public class AssociationCollection implements Iterable<Association>  {
 		m_associations = Lists.newArrayList();
 	}
 	
-	private AssociationCollection(String id, List<Association> assocList) {
+	public AssociationCollection(String id, List<Association> assocList) {
 		m_id = id;
 		m_associations = assocList;
 	}
@@ -117,6 +123,10 @@ public class AssociationCollection implements Iterable<Association>  {
 		return Funcs.removeFirstIf(m_associations, a -> a.match(key));
 	}
 	
+	public void removeIf(Predicate<? super Association> pred) {
+		m_associations.removeIf(pred);
+	}
+	
 	public Association remove(int index) {
 		return m_associations.remove(index);
 	}
@@ -154,7 +164,12 @@ public class AssociationCollection implements Iterable<Association>  {
 				else {
 					// 새로 삽입될 association이 동일 association이면서 점수가
 					// 더 높은 경우는 replace시킨다.
+					// 이때 기존 것의 firstTs가 더 작은 경우에는 이를 사용한다.
+					if ( current.getFirstTimestamp() < assoc.getFirstTimestamp() ) {
+						assoc.setFirstTimestamp(current.getFirstTimestamp());
+					}
 					iter.remove();
+					
 					m_associations.add(assoc);
 					return Collections.singletonList(assoc);
 				}
@@ -174,31 +189,45 @@ public class AssociationCollection implements Iterable<Association>  {
 		}
 		
 		boolean expanded = false;
+		List<Association> mergeds = Collections.emptyList();
 		
 		List<Association> mergeables = groups.get(BinaryRelation.MERGEABLE);
 		if ( mergeables != null && mergeables.size() > 0 ) {
-			List<Association> result = FStream.from(mergeables)
-														.map(m -> m.merge(assoc))
-														.flatMapIterable(m -> add(m, true))
-														.toList();
+			mergeds = Funcs.map(mergeables, m -> m.merge(assoc));
+			List<Association> result = FStream.from(mergeds)
+												.flatMapIterable(m -> add(m, true))
+												.toList();
 			if ( result.size() > 0 ) {
 				updateds.addAll(result);
 				expanded = true;
 			}
 		}
 
-		if ( groups.containsKey(BinaryRelation.CONFLICT) ) {
+		List<Association> conflicts = groups.get(BinaryRelation.CONFLICT);
+		if ( conflicts != null && conflicts.size() > 0 ) {
 			if ( expandOnConflict ) {
-				List<Association> conflicts = groups.get(BinaryRelation.CONFLICT);
+				List<Association> resolveds = Lists.newArrayList();
 				for ( Association conflict: conflicts ) {
-					Association merged = assoc.mergeWithoutConflicts(conflict, true);
-					if ( merged != null ) {
-						updateds.addAll(add(merged, false));
-						expanded = true;
+					Association resolved = assoc.mergeWithoutConflicts(conflict, true);
+					if ( resolved != null ) {
+						resolveds.add(resolved);
+						if ( s_logger.isDebugEnabled() ) {
+							s_logger.debug("add conflict-resolved assoc={} -> {}, conflict={}",
+											assoc.getTrackletsString(), resolved.getTrackletsString(),
+											conflict.getTrackletsString());
+						}
 					}
+				}
+				List<Association> result = FStream.from(resolveds)
+												.flatMapIterable(r -> add(r, false))
+												.toList();
+				if ( result.size() > 0 ) {
+					updateds.addAll(result);
+					expanded = true;
 				}
 			}
 		}
+		
 		if ( !expanded ) {
 			m_associations.add(assoc);
 			updateds.add(assoc);
@@ -216,29 +245,22 @@ public class AssociationCollection implements Iterable<Association>  {
 		
 		// collection에 속한 모든 association들을 길이와 score 값을 기준을 정렬시킨다.
 		List<Association> sorted = FStream.from(assocList)
-												.sort(a -> Tuple.of(a.size(), a.getScore()), true)
-												.toList();
+											.sort(a -> Tuple.of(a.size(), a.getScore()), true)
+											.toList();
 		
 		// 정렬된 association들을 차례대로 읽어 동일한 tracklet으로 구성된 inferior association들을
 		// 삭제하는 방법으로 best association들을 구한다.
-//		sorted = Lists.reverse(sorted);
 		while ( sorted.size() > 0 ) {
 			Association best = sorted.remove(0);
 			bestAssocList.add(best);
 			
 			// 선택된 association과 conflict를 발생하는 후보 association들을 conflict-resolve 시킨다.
-			List<Association> conflicts = Funcs.removeIf(sorted, a -> a.intersectsTracklet(best));
-			if ( conflicts.size() > 0 ) {
-				// conflict가 발생된 association들을 resolve시키고 다시 넣는다.
-				List<Association> resolveds = FStream.from(conflicts)
-															.flatMapNullable(a -> a.resolveConflict(best))
-															.sort(a -> Tuple.of(a.size(), a.getScore()), true)
-															.toList();
-				// 정렬이 깨졌을 수 있기 때문에 다시 정렬시킨다.
-				if ( resolveds.size() > 0 ) {
-					resolveds.forEach(sorted::add);
-				}
-			}
+			List<Association> compatibles = resolveConflict(best, sorted);
+			
+			// 정렬이 깨졌을 수 있기 때문에 다시 정렬시킨다.
+			sorted = FStream.from(compatibles)
+							.sort(a -> Tuple.of(a.size(), a.getScore()), true)
+							.toList();
 		}
 		
 		return bestAssocList;
@@ -251,5 +273,50 @@ public class AssociationCollection implements Iterable<Association>  {
 	@Override
 	public String toString() {
 		return m_associations.toString();
+	}
+	
+	public void resolveConflict(Association key) {
+		List<Association> compatibles = resolveConflict(key, m_associations);
+		m_associations.clear();
+		for ( Association comp: compatibles ) {
+			add(comp);
+		}
+	}
+	
+	public static List<Association> resolveConflict(Association key, List<Association> associations) {
+		if ( s_logger.isDebugEnabled() ) {
+			s_logger.debug("resolve conflicts: key={}", key.getTrackletsString());
+		}
+		
+		// 'm_associations'에 등록된 모든 association들을 closure와의 conflict 여부에 따라
+		// 두가지 group으로 분류한다.
+		Tuple<List<Association>, List<Association>> partioned
+			= Funcs.partition(associations, key::intersectsTracklet);
+		List<Association> conflicts = partioned._1;
+		List<Association> compatibles = partioned._2;
+		
+		// Conflict group에 속한 각 association들을 conflict resolve한 결과를 conflict가
+		// 발생되지 않는 association group에 추가하여 새로운 association group ('m_association')을 설정한다.
+		while ( conflicts.size() > 0 ) {
+			Association conflict = conflicts.remove(0);
+			
+			List<Association> resoloveds = conflict.resolveConflict(key);
+			if ( resoloveds.size() > 0 ) {
+				for ( Association resoloved: resoloveds ) {
+					compatibles.add(resoloved);
+					if ( s_logger.isDebugEnabled() ) {
+						s_logger.debug("\treduces the conflicting one: conflict={}, reduced={}",
+										key.getTrackletsString(), resoloved.getTrackletsString());
+					}
+				}
+			}
+			else {
+				if ( s_logger.isDebugEnabled() ) {
+					s_logger.debug("\tpurges the conflicting one: conflict={}", key.getTrackletsString());
+				}
+			}
+		}
+		
+		return compatibles;
 	}
 }

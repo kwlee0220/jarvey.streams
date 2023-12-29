@@ -1,14 +1,18 @@
 package jarvey.streams.assoc;
 
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
+import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.gson.annotations.SerializedName;
 
 import utils.func.Funcs;
 
+import jarvey.streams.model.Timestamped;
 import jarvey.streams.model.TrackletId;
 
 
@@ -23,13 +27,22 @@ public final class BinaryAssociation {
 	@SerializedName("first_ts") private long m_firstTs;
 	@SerializedName("score") private double m_score;
 	
-	private static class TimedTracklet {
+	public static class TimedTracklet implements Timestamped {
 		@SerializedName("tracklet") private TrackletId m_tracklet;
 		@SerializedName("ts") private long m_ts;
 		
 		TimedTracklet(TrackletId trkId, long ts) {
 			m_tracklet = trkId;
 			m_ts = ts;
+		}
+		
+		public TrackletId getTrackletId() {
+			return m_tracklet;
+		}
+
+		@Override
+		public long getTimestamp() {
+			return m_ts;
 		}
 	}
 	
@@ -85,17 +98,21 @@ public final class BinaryAssociation {
 		return TrackletId.fromString(m_id);
 	}
 	
-	public TrackletId getFollower() {
+	public TimedTracklet getFollower() {
 		if ( m_left.m_tracklet.toString().equals(m_id) ) {
-			return m_right.m_tracklet;
+			return m_right;
 		}
 		else {
-			return m_left.m_tracklet;
+			return m_left;
 		}
 	}
 
 	public Set<TrackletId> getTracklets() {
 		return Sets.newHashSet(m_left.m_tracklet, m_right.m_tracklet);
+	}
+	
+	public List<TimedTracklet> getTimedTracklets() {
+		return Arrays.asList(m_left, m_right);
 	}
 	
 	public TrackletId getLeftTrackletId() {
@@ -222,5 +239,34 @@ public final class BinaryAssociation {
 				&& Double.compare(m_score, other.m_score) == 0
 				&& getLeftTimestamp() == other.getLeftTimestamp()
 				&& getRightTimestamp() == other.getRightTimestamp();
+	}
+	
+	public static List<List<BinaryAssociation>> splitIntoConnectedClosure(Iterable<BinaryAssociation> assocList) {
+		List<Set<TrackletId>> idClosures = Lists.newArrayList();
+		for ( BinaryAssociation ba: assocList ) {
+			// 왼쪽/오른쪽 tracklet id에 따른 closure를 찾아 이 두 closure를 서로 합친다.
+			Set<TrackletId> left = Funcs.findFirst(idClosures, c -> c.contains(ba.getLeftTrackletId()));
+			Set<TrackletId> right = Funcs.findFirst(idClosures, c -> c.contains(ba.getRightTrackletId()));
+			if ( left != null && right == null ) {
+				left.add(ba.getRightTrackletId());
+			}
+			else if ( left == null && right != null ) {
+				right.add(ba.getLeftTrackletId());
+			}
+			else if ( left == null && right == null ) {
+				idClosures.add(Sets.newHashSet(ba.getTracklets()));
+			}
+			else {
+				left.addAll(right);
+				idClosures.remove(right);
+			}
+		}
+		
+		List<List<BinaryAssociation>> closures = Lists.newArrayList();
+		for ( Set<TrackletId> trkSet: idClosures ) {
+			List<BinaryAssociation> members = Funcs.filter(assocList, ba -> ba.intersectsTracklet(trkSet)); 
+			closures.add(members);
+		}
+		return closures;
 	}
 }

@@ -1,9 +1,6 @@
 package jarvey.streams.assoc.feature;
 
-import java.util.List;
-
 import com.google.common.collect.MinMaxPriorityQueue;
-import com.google.common.collect.Ordering;
 
 /**
  *

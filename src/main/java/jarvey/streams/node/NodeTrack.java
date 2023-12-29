@@ -46,8 +46,8 @@ public final class NodeTrack implements Timestamped, ObjectTrack, KeyedUpdate, C
 	@SerializedName("node") private String m_nodeId;
 	@SerializedName("track_id") private String m_trackId;
 	@SerializedName("state") private State m_state;
-	@SerializedName("location") private Envelope m_box;
-	@SerializedName("world_coord") private Point m_worldCoords;
+	@SerializedName("bbox") private Envelope m_bbox;
+	@SerializedName("location") private Point m_location;
 	@SerializedName("distance") private double m_distance;
 	@SerializedName("zone_expr") private ZoneRelation m_zoneRelation;
 	@SerializedName("first_ts") private long m_firstTs;
@@ -78,7 +78,7 @@ public final class NodeTrack implements Timestamped, ObjectTrack, KeyedUpdate, C
 
 	@Override
 	public Point getLocation() {
-		return getWorldCoordinates();
+		return m_location;
 	}
 	
 	public State getState() {
@@ -93,8 +93,8 @@ public final class NodeTrack implements Timestamped, ObjectTrack, KeyedUpdate, C
 		return m_state.equals(State.Deleted);
 	}
 	
-	public Envelope getBox() {
-		return m_box;
+	public Envelope getBoundingBox() {
+		return m_bbox;
 	}
 	
 	public long getFrameIndex() {
@@ -111,10 +111,6 @@ public final class NodeTrack implements Timestamped, ObjectTrack, KeyedUpdate, C
 	
 	public long getTimestamp() {
 		return m_ts;
-	}
-	
-	public Point getWorldCoordinates() {
-		return m_worldCoords;
 	}
 	
 	public double getDistance() {
@@ -147,8 +143,7 @@ public final class NodeTrack implements Timestamped, ObjectTrack, KeyedUpdate, C
 	@Override
 	public String toString() {
 		String trackStr = (isDeleted()) ? "Deleted" : "Tracked";
-//		String bboxStr = (m_box != null) ? GeoUtils.toString(m_box, 0) : "null";
-		String worldCoordStr = m_worldCoords != null ? GeoUtils.toString(m_worldCoords, 1) : "null";
+		String worldCoordStr = m_location != null ? GeoUtils.toString(m_location, 1) : "null";
 		return String.format("%s[%s, world=%s, frame_idx=%d, ts=%d]",
 								trackStr, getTrackletId(), worldCoordStr, m_frameIndex, m_ts);
 	}

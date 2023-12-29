@@ -2,7 +2,7 @@
 <Configuration status="INFO">
 	<Appenders>
 		<Console name="STDOUT" target="SYSTEM_OUT">
-			<PatternLayout pattern="%d{HH:mm:ss,SSS} %-5p [%-21c{2}] %m (%F:%L)%n"/>
+			<PatternLayout pattern="%d{HH:mm:ss,SSS} %-5p [%-23c{-2}] %m (%F:%L)%n"/>
 		</Console>
 <!--
 		<RollingFile name="File" fileName="./logs/jarvey.streams.log"
@@ -19,13 +19,23 @@
 	
 	<Loggers>
 		<Logger name="org.apache.kafka" level="warn"/>
-		<Logger name="jarvey.assoc.feature.FeatureBasedAssociator" level="info"/>
 		<Logger name="jarvey.streams.updatelog" level="info"/>
 		
-		<Logger name="jarvey.streams.assoc.motion.FinalMotionAssociationSelector" level="info"/>
-		<Logger name="jarvey.streams.assoc.motion.FinalFeatureAssociationSelector" level="info"/>
-		<Logger name="jarvey.streams.assoc.feature.FeatureBinaryTrackletAssociator" level="info"/>
-		<Logger name="jarvey.streams.assoc.AssociationStore" level="info"/>
+		<Logger name="jarvey.streams.assoc.AssociationCollection" level="info"/>
+		<Logger name="jarvey.streams.assoc.final" level="info"/>
+		<Logger name="jarvey.streams.assoc.store" level="warn"/>
+		
+		<Logger name="jarvey.streams.assoc.motion" level="info"/>
+		<Logger name="jarvey.streams.assoc.motion.binary" level="info"/>
+		<Logger name="jarvey.streams.assoc.motion.binary.window" level="warn"/>
+		<Logger name="jarvey.streams.assoc.motion.binary.dist" level="warn"/>
+		
+		<Logger name="jarvey.streams.assoc.feature" level="info"/>
+		<Logger name="jarvey.streams.assoc.feature.candidate" level="info"/>
+		<Logger name="jarvey.streams.assoc.feature.dist" level="warn"/>
+		
+		<Logger name="jarvey.streams.assoc.global_tracks" level="debug"/>
+		<Logger name="jarvey.streams.assoc.global_tracks.cache" level="debug"/>
 		
 		<Root level="info">
 			<AppenderRef ref="STDOUT"/>

@@ -1,8 +1,8 @@
 package jarvey.streams.assoc.feature;
 
-import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
@@ -69,6 +69,11 @@ public class MCMOTNetwork {
 			List<IncomingLink> links = m_incomingLinks.computeIfAbsent(enterZone, k -> Lists.newArrayList());
 			links.add(link);
 		}
+		
+		private void addIncomingLink(String enterZone, IncomingLink link) {
+			List<IncomingLink> links = m_incomingLinks.computeIfAbsent(enterZone, k -> Lists.newArrayList());
+			links.add(link);
+		}
 	}
 	
 	public static class IncomingLink {
@@ -96,31 +101,57 @@ public class MCMOTNetwork {
 		
 		@Override
 		public String toString() {
-			return String.format("%s: ->%s %s", m_exitNode, m_exitZone, m_transitionTimeRange);
+			return String.format("%s:%s-> %s", m_exitNode, m_exitZone, m_transitionTimeRange);
+		}
+		
+		@SuppressWarnings("unchecked")
+		public static IncomingLink fromMap(Map<String,Object> incomingLink) {
+			List<String> from = (List<String>)incomingLink.get("coming_from");
+			String exitNode = from.get(0);
+			String exitZone = from.get(1);
+			
+			List<String> transTime = (List<String>)incomingLink.get("transition_time");
+			List<Duration> durList = Funcs.map(transTime,
+												s -> Duration.ofMillis(UnitUtils.parseDurationMillis(s)));
+			Range<Duration> transTimeRange = Range.between(durList.get(0), durList.get(1));
+			
+			return new IncomingLink(exitNode, exitZone, transTimeRange);
 		}
 	}
 	
-	public static MCMOTNetwork load(File yamlFile) throws IOException {
+	public static MCMOTNetwork load(Path yamlFile) throws IOException {
 		MCMOTNetwork network = new MCMOTNetwork();
 		
-		Map<String, Map<String,Object>> listeningNodeDescs = new Yaml().load(new FileReader(yamlFile));
+		Map<String, Map<String,Object>> listeningNodeDescs = new Yaml().load(new FileReader(yamlFile.toFile()));
 		for ( Map.Entry<String, Map<String,Object>> ent: listeningNodeDescs.entrySet() ) {
-			ListeningNode listener = new ListeningNode(ent.getKey());
-			for ( Map.Entry<String, Object> linkDesc: ent.getValue().entrySet() ) {
-				String enterZone = linkDesc.getKey();
-				
-				@SuppressWarnings("unchecked")
-				Map<String,Object> incomingLink = (Map<String,Object>)linkDesc.getValue();
-				String exitNode = (String)incomingLink.get("incoming_node");
-				String exitZone = (String)incomingLink.get("exit_zone");
-				
-				List<String> transTime = (List<String>)incomingLink.get("transition_time");
-				List<Duration> durList = Funcs.map(transTime,
-													s -> Duration.ofMillis(UnitUtils.parseDurationMillis(s)));
-				Range<Duration> transTimeRange = Range.between(durList.get(0), durList.get(1));
-				listener.addIncomingLink(enterZone, exitNode, exitZone, transTimeRange);
+			ListeningNode listeningNode = new ListeningNode(ent.getKey());
+			for ( Map.Entry<String, Object> zoneDesc: ent.getValue().entrySet() ) {
+				String zoneId = zoneDesc.getKey();
+				List<Map<String,Object>> incomingLinks = (List<Map<String,Object>>)zoneDesc.getValue();
+				for ( Map<String,Object> inLink: incomingLinks ) {
+					listeningNode.addIncomingLink(zoneId, IncomingLink.fromMap(inLink));
+				}
+//				if ( zoneDesc.getValue() instanceof List ) {
+//					for ( Map<String,Object> )
+//				}
+//				else {
+//					listener.addIncomingLink(zoneId, );
+//				}
+//				
+//				
+//				@SuppressWarnings("unchecked")
+//				Map<String,Object> incomingLink = (Map<String,Object>)zoneDesc.getValue();
+//				List<String> from = (List<String>)incomingLink.get("coming_from");
+//				String exitNode = from.get(0);
+//				String exitZone = from.get(1);
+//				
+//				List<String> transTime = (List<String>)incomingLink.get("transition_time");
+//				List<Duration> durList = Funcs.map(transTime,
+//													s -> Duration.ofMillis(UnitUtils.parseDurationMillis(s)));
+//				Range<Duration> transTimeRange = Range.between(durList.get(0), durList.get(1));
+//				listener.addIncomingLink(zoneId, exitNode, exitZone, transTimeRange);
 			}
-			network.addListeningNode(listener);
+			network.addListeningNode(listeningNode);
 		}
 		
 		return network;

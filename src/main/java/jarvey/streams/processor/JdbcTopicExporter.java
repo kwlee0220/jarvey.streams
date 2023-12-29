@@ -16,8 +16,8 @@ import utils.jdbc.JdbcProcessor;
 public abstract class JdbcTopicExporter<K,V> implements KafkaTopicPartitionProcessor<K,V> {
 	private final JdbcProcessor m_jdbc;
 	
-	protected abstract ProcessResult
-	export(Connection conn, TopicPartition tpart, List<ConsumerRecord<K,V>> partition) throws SQLException;
+	protected abstract ProcessResult export(Connection conn, TopicPartition tpart,
+											List<ConsumerRecord<K,V>> partition) throws SQLException;
 	
 	protected JdbcTopicExporter(JdbcProcessor jdbc) {
 		m_jdbc = jdbc;

@@ -107,6 +107,10 @@ public class Association implements Timestamped {
 	public long getFirstTimestamp() {
 		return m_firstTs;
 	}
+	
+	public void setFirstTimestamp(long firstTs) {
+		m_firstTs = firstTs;
+	}
 
 	public long getTimestamp() {
 		return m_ts;
@@ -428,15 +432,19 @@ public class Association implements Timestamped {
 		return Association.from(mergeds);
 	}
 	
-	public Association resolveConflict(Association conflict) {
-		List<BinaryAssociation> newSupports
+	public List<Association> resolveConflict(Association conflict) {
+		// 주어진 'conflict'와 conflict가 발생하지 않는 support만 찾는다.
+		List<BinaryAssociation> nonConflictingSupports
 			= Funcs.filter(m_supports, ba -> Collections.disjoint(ba.getTracklets(), conflict.getTracklets()));
-		if ( newSupports.size() >= 1 ) {
-			return Association.from(newSupports);
-		}
-		else {
-			return null;
-		}
+		
+		// 찾은 support들의 연결정보를 활용하여 connected closure들을 구한다.
+		List<List<BinaryAssociation>> connectedSupportsGroup
+			= BinaryAssociation.splitIntoConnectedClosure(nonConflictingSupports);
+		
+		// 각 connected support closure별로 Association을 생성한다.
+		return FStream.from(connectedSupportsGroup)
+						.map(grp -> Association.from(nonConflictingSupports))
+						.toList();
 	}
 	
 	public Association mergeWithoutConflicts(Association conflict, boolean ignoreIdentity) {

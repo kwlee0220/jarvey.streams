@@ -1,0 +1,18 @@
+---
+"etri:01":
+   A:
+      - coming_from: ["etri:05", B]
+        transition_time: [3s, 15s]
+      
+"etri:05":
+   A:
+      - coming_from: ["etri:06", A]
+        transition_time: [1s, 11s]
+   B:
+      - coming_from: ["etri:01", A]
+        transition_time: [3s, 15s]
+      
+"etri:06":
+   A:
+      - coming_from: ["etri:05", A]
+        transition_time: [1s, 11s]

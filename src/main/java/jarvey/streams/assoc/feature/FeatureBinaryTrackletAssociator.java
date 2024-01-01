@@ -208,7 +208,7 @@ class FeatureBinaryTrackletAssociator
 		}
 		
 		FStream.from(candidates)
-				.flatMapOption(idx -> getTrackletFeatureMatrix(idx.getTrackletId()))
+				.flatMapFOption(idx -> getTrackletFeatureMatrix(idx.getTrackletId()))
 				.forEach(matrix -> {
 					TrackletId tid = matrix.getTrackletId();
 					m_trackletFeaturesCache.put(tid, matrix);
@@ -326,7 +326,7 @@ class FeatureBinaryTrackletAssociator
 		List<AssociationGroup> assocGroups =
 			FStream.from(session.m_assocCandidates.values())
 					.filter(c -> !m_matches.containsKey(c.getTrackletId()))
-					.flatMapOption(c -> {
+					.flatMapFOption(c -> {
 						return associate(session, c)
 								.map(ba -> {
 									TrackletId peerId = ba.getOther(thisTrkId);

@@ -13,7 +13,7 @@ import utils.Generator;
 public class Test3 {
 	public static final void main(String... args) throws Exception {
 		ExecutorService exector = Executors.newFixedThreadPool(10);
-		Generator<Integer> gen = new Generator<Integer>(exector, 10) {
+		Generator<Integer> gen = new Generator<Integer>(10, exector) {
 			@Override
 			public void run() throws Throwable {
 				for ( int i =0; i < 10; ++i ) {

@@ -144,7 +144,7 @@ public abstract class AbstractGlobalTrackGenerator {
 		// delete event의 경우는 association 별로 소속 tracklet이 모두 delete되는
 		// 경우에만 delete global track을 추가하되, 이때도 association id를 사용한다.
 		deleteds.stream()
-				.flatMapIterable(kv -> handleTrackletDeleted((Association)kv.key(), kv.value()))
+				.flatMap(kv -> FStream.from(handleTrackletDeleted((Association)kv.key(), kv.value())))
 				.forEach(gtracks::add);
 		
 		// 생성된 global track들을 timestamp를 기준으로 정렬시킨다.

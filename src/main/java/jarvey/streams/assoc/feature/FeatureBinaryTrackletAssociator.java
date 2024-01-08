@@ -446,7 +446,7 @@ class FeatureBinaryTrackletAssociator
 		// 모든 incoming link에 대해 association을 해 볼만한 tracklet들을 검색한다.
 		List<NodeTrackletIndex> candidates
 			= FStream.from(incomingLinks)
-						.flatMapIterable(link -> findNodeTracksFromIncomingLink(session, link))
+						.flatMap(link -> FStream.from(findNodeTracksFromIncomingLink(session, link)))
 						.toList();
 		if ( LOGGER_CANDIDATE.isInfoEnabled() ) {
 			String msg = FStream.from(candidates)

@@ -195,7 +195,7 @@ public class AssociationCollection implements Iterable<Association>  {
 		if ( mergeables != null && mergeables.size() > 0 ) {
 			mergeds = Funcs.map(mergeables, m -> m.merge(assoc));
 			List<Association> result = FStream.from(mergeds)
-												.flatMapIterable(m -> add(m, true))
+												.flatMap(m -> FStream.from(add(m, true)))
 												.toList();
 			if ( result.size() > 0 ) {
 				updateds.addAll(result);
@@ -219,7 +219,7 @@ public class AssociationCollection implements Iterable<Association>  {
 					}
 				}
 				List<Association> result = FStream.from(resolveds)
-												.flatMapIterable(r -> add(r, false))
+												.flatMap(r -> FStream.from(add(r, false)))
 												.toList();
 				if ( result.size() > 0 ) {
 					updateds.addAll(result);

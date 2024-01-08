@@ -107,7 +107,7 @@ public class MotionBinaryTrackletAssociator
 		// 정렬되지 않을 수도 있기 때문에, 이들을 시간 순서대로 정렬시킨다.
 		// 이때, TrackletDelete 이벤트로 함께 포함시켜서 정렬시킨다.
 		FStream.from(groupByArea(windowed))
-				.flatMapIterable(kv -> associate(m_areaRegistry.get(kv.key), kv.value))
+				.flatMap(kv -> FStream.from(associate(m_areaRegistry.get(kv.key), kv.value)))
 				.sort(r -> r.timestamp())
 				.forEach(m_context::forward);
 	}

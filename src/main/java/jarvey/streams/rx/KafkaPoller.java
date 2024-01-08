@@ -58,7 +58,6 @@ public class KafkaPoller {
 		private final Consumer<KafkaConsumer<K, V>> m_closer;
 		private FStream<ConsumerRecord<K,V>> m_inner = FStream.empty();	// null if closed
 		private boolean m_initial = true;
-		private boolean m_eos = false;
 		
 		Polling(@Nonnull KafkaConsumer<K, V> consumer, @Nonnull Consumer<KafkaConsumer<K, V>> closer) {
 			checkNotNullArgument(consumer);
@@ -71,7 +70,6 @@ public class KafkaPoller {
 		@Override
 		protected void closeInGuard() throws Exception {
 			if ( m_inner != null ) {
-				m_eos = true;
 				m_inner = null;
 				
 				m_closer.accept(m_consumer);
@@ -79,12 +77,9 @@ public class KafkaPoller {
 		}
 		
 		@Override
-		public FOption<ConsumerRecord<K,V>> next() {
+		public FOption<ConsumerRecord<K,V>> nextInGuard() {
 			if ( m_inner == null ) {
 				throw new IllegalStateException("closed already");
-			}
-			if ( m_eos ) {
-				return FOption.empty();
 			}
 			
 			return m_inner.next()
@@ -106,7 +101,6 @@ public class KafkaPoller {
 					return FStream.from(records);
 				}
 				if ( m_stopOnTimeout ) {
-					m_eos = true;
 					return FStream.empty();
 				}
 			}

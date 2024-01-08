@@ -122,7 +122,7 @@ public class FinalAssociationSelector implements ValueMapper<TrackletDeleted, It
 		// 검색된 최종 final association에 등록된 모든 tracklet에 대한
 		// 종료 정보를 (더 이상 필요없기 때문에) 제거한다.
 		FStream.from(graduated)
-				.flatMapIterable(assoc -> assoc.getTracklets());
+				.flatMap(assoc -> FStream.from(assoc.getTracklets()));
 		
 //		TrackletId TRK_ID = new TrackletId("etri:01", "19");
 //		if ( m_closedTracklets.contains(TRK_ID) ) {

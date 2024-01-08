@@ -119,7 +119,7 @@ public final class MotionAssociationStreamBuilder {
 	
 		m_closedTracklets.add(trkId);
 		List<Association> finalAssocList = FStream.from(selector.apply(deleted))
-													.flatMapIterable(a -> m_finalAssociations.add(a))
+													.flatMap(a -> FStream.from(m_finalAssociations.add(a)))
 													.peek(a -> m_assocStore.addAssociation(a))
 													.toList();
 		List<KeyValue<TrackletId,Association>> ret

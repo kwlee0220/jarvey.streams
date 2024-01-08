@@ -2,7 +2,6 @@ package jarvey.streams.assoc.motion;
 
 import static utils.Utilities.checkState;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -94,7 +93,7 @@ public class OverlapArea {
 	public Iterable<String> getOverlaps(String nodeId) {
 		return FStream.from(m_overlaps)
 						.filter(t -> nodeId.equals(t._1) || nodeId.equals(t._2))
-						.flatMapIterable(t -> Arrays.asList(t._1, t._2))
+						.flatMap(t -> FStream.of(t._1, t._2))
 						.filterNot(nodeId::equals)
 						.toSet();
 	}

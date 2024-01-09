@@ -486,7 +486,7 @@ class FeatureBinaryTrackletAssociator
 			m_featureIndexes.streamUpdatesOfIndex(idx)
 							.map(kv -> kv.value)
 							.filterNot(TrackFeature::isDeleted)
-							.collectLeft(new TrackletFeatureMatrix(trkId, idx.getTimestamp()),
+							.collect(new TrackletFeatureMatrix(trkId, idx.getTimestamp()),
 										TrackletFeatureMatrix::addTrackFeature);
 		if ( LOGGER_CANDIDATE.isDebugEnabled() ) {
 			Range<Long> offsetRange = idx.getTopicOffsetRange();

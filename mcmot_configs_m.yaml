@@ -4,9 +4,10 @@ kafka:
    topics:
       node-tracks: node-tracks
       track-features: track-features
+      tracklet-associateds: tracklet-associateds
       global-tracks: global-tracks
 
-jdbc: postgresql:localhost:5432:dna:urc2004:dna
+jdbc: postgresql:localhost:6432:dna:urc2004:dna
 tables:
    associations: associations
    node-tracks: node_tracks_index
@@ -21,7 +22,8 @@ motion:
       max-distance: 8m
    
 output:
-   topic: global-tracks
+   max-association-delay: 3m
+   cache-size: 128
    interval: 100ms
-   grace_time: 100ms
+   grace-time: 100ms
 

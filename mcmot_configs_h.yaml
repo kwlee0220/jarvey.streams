@@ -1,13 +1,13 @@
 ---
 kafka:
    bootstrap-servers: localhost:9092
-topics:
-   node-tracks: node-tracks
-   track-features: track-features
-   tracklet-associateds: tracklet-associateds
-   global-tracks: global-tracks
+   topics:
+      node-tracks: node-tracks
+      track-features: track-features
+      tracklet-associateds: tracklet-associateds
+      global-tracks: global-tracks
 
-jdbc: postgresql:localhost:5432:dna:urc2004:dna
+jdbc: postgresql:localhost:6432:dna:urc2004:dna
 tables:
    node-tracks: node_tracks_index
    track-features: track_features_index

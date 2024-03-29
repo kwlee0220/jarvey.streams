@@ -112,12 +112,13 @@ public class AssociationStore implements KeyValueMapper<String, Association, Key
 	private Association readAssociation(Connection conn, String assocId) throws SQLException {
 		String sqlStrFormat = "select json " + "from associations where id = '%s'";
 		String sqlStr = String.format(sqlStrFormat, assocId);
-		ResultSet rs = m_jdbc.executeQuery(sqlStr);
-		if ( rs.next() ) {
-			return GsonUtils.parseJson(rs.getString(1), Association.class);
-		}
-		else {
-			return null;
+		try ( ResultSet rs = m_jdbc.executeQuery(sqlStr, false) ) {
+			if ( rs.next() ) {
+				return GsonUtils.parseJson(rs.getString(1), Association.class);
+			}
+			else {
+				return null;
+			}
 		}
 	}
 
@@ -125,12 +126,13 @@ public class AssociationStore implements KeyValueMapper<String, Association, Key
 		String sqlStrFormat = "select a.json " + "from associated_tracklets t, associations a "
 								+ "where t.association = a.id " + "and t.id = '%s'";
 		String sqlStr = String.format(sqlStrFormat, trkId.toString());
-		ResultSet rs = m_jdbc.executeQuery(sqlStr);
-		if ( rs.next() ) {
-			return GsonUtils.parseJson(rs.getString(1), Association.class);
-		}
-		else {
-			return null;
+		try ( ResultSet rs = m_jdbc.executeQuery(sqlStr, false) ) {
+			if ( rs.next() ) {
+				return GsonUtils.parseJson(rs.getString(1), Association.class);
+			}
+			else {
+				return null;
+			}
 		}
 	}
 

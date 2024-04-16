@@ -124,7 +124,7 @@ public class HoppingWindowManager {
 			}
 		}
 		else if ( ts < m_currentTs ) {
-			Window window = Funcs.getFirst(m_windows);
+			Window window = Funcs.getFirstOrNull(m_windows);
 			if ( window != null && window.beginTime() > ts ) {
 				// too-late data
 				if ( s_logger.isWarnEnabled() ) {

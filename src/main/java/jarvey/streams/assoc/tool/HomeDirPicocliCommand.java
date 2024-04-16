@@ -3,8 +3,6 @@ package jarvey.streams.assoc.tool;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.core.LoggerContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -94,8 +92,8 @@ public abstract class HomeDirPicocliCommand implements Runnable, LoggerSettable 
 		return toAbsolutePath(Paths.get(path));
 	}
 
-	public void configureLog4j2(Path confFile) {
-		LoggerContext context = (LoggerContext)LogManager.getContext(false);
-		context.setConfigLocation(confFile.toUri());
-	}
+//	public void configureLog4j2(Path confFile) {
+//		LoggerContext context = (LoggerContext)LogManager.getContext(false);
+//		context.setConfigLocation(confFile.toUri());
+//	}
 }

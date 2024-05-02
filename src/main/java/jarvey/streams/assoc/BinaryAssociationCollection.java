@@ -135,7 +135,8 @@ public class BinaryAssociationCollection implements Iterable<BinaryAssociation> 
 		
 		Set<TrackletId> trkIds = assoc.getTracklets();
 		Indexed<BinaryAssociation> found = Funcs.findFirstIndexed(m_associations,
-																ba -> ba.getTracklets().containsAll(trkIds));
+																ba -> ba.getTracklets().containsAll(trkIds))
+												.getOrNull();
 		if ( found != null ) {
 			if ( found.value().getScore() < assoc.getScore() ) {
 				m_associations.set(found.index(), assoc);

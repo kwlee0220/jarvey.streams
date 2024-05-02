@@ -1,7 +1,6 @@
 rootProject.name = 'jarvey.streams'
 
-ext.common_dir = '../../common'
-['utils', 'utils.geo'].each {
-	include ":$it"
-	project(":$it").projectDir = file("$common_dir/$it")
-}
+include ':utils'
+project(':utils').projectDir = file('../../common/utils')
+include ':utils.geo'
+project(':utils.geo').projectDir = file('../../common/utils.geo')

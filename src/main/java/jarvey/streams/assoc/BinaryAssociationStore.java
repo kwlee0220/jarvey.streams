@@ -180,7 +180,7 @@ public class BinaryAssociationStore {
 		}
 		
 		public void add(BinaryAssociation assoc) {
-			Indexed<BinaryAssociation> found = Funcs.findFirstIndexed(this.association, assoc::match);
+			Indexed<BinaryAssociation> found = Funcs.findFirstIndexed(this.association, assoc::match).getOrNull();
 			if ( found != null ) {
 				this.association.set(found.index(), assoc);
 			}

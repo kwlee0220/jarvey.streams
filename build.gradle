@@ -9,7 +9,8 @@ plugins {
 group = 'etri'
 version = '24.01.17'
 
-sourceCompatibility = JavaVersion.VERSION_1_8
+sourceCompatibility = '11'
+targetCompatibility = '11'
 [compileJava,compileTestJava]*.options*.encoding = 'UTF-8'
 
 protobuf {

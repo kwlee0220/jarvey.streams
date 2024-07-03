@@ -67,7 +67,7 @@ public class BinaryAssociationCollection implements Iterable<BinaryAssociation> 
 	 * @return	검색된 association 객체. 존재하지 않는 경우에는 null.
 	 */
 	public BinaryAssociation get(Set<TrackletId> key) {
-		return Funcs.findFirst(m_associations, a -> key.equals(a.getTracklets()));
+		return Funcs.findFirst(m_associations, a -> key.equals(a.getTracklets())).getOrNull();
 	}
 
 	/**

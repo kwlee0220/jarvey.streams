@@ -97,7 +97,7 @@ public class Association implements Timestamped {
 	 * 				만일 주어진 노드에 해당하는 tracklet이 없는 경우는 {@code null}를 반환함.
 	 */
 	public TrackletId getTrackletId(String nodeId) {
-		return Funcs.findFirst(getTracklets(), t -> t.getNodeId().equals(nodeId));
+		return Funcs.findFirst(getTracklets(), t -> t.getNodeId().equals(nodeId)).getOrNull();
 	}
 
 	public double getScore() {

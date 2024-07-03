@@ -79,7 +79,7 @@ public class AssociationStore implements KeyValueMapper<String, Association, Key
 
 			// best association을 구한다.
 			AssociationCollection bestAssocs = coll.getBestAssociations("tmp");
-			Association best = Funcs.getFirstOrNull(bestAssocs);
+			Association best = Funcs.getFirst(bestAssocs).getOrNull();
 			if ( bestAssocs.size() != 1 && s_logger.isInfoEnabled() ) {
 				String losers = FStream.from(bestAssocs)
 										.drop(1)

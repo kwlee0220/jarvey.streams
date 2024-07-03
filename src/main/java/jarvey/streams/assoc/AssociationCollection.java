@@ -74,7 +74,7 @@ public class AssociationCollection implements Iterable<Association>  {
 	 * @return	검색된 association 객체. 존재하지 않는 경우에는 null.
 	 */
 	public Association get(Set<TrackletId> key) {
-		return Funcs.findFirst(m_associations, a -> key.equals(a.getTracklets()));
+		return Funcs.findFirst(m_associations, a -> key.equals(a.getTracklets())).getOrNull();
 	}
 
 	/**
@@ -110,7 +110,7 @@ public class AssociationCollection implements Iterable<Association>  {
 	}
 	
 	public Association findSuperiorFirst(Association key) {
-		return Funcs.findFirst(m_associations, cl -> cl.isSuperior(key));
+		return Funcs.findFirst(m_associations, cl -> cl.isSuperior(key)).getOrNull();
 	}
 	
 	/**

@@ -245,8 +245,8 @@ public final class BinaryAssociation {
 		List<Set<TrackletId>> idClosures = Lists.newArrayList();
 		for ( BinaryAssociation ba: assocList ) {
 			// 왼쪽/오른쪽 tracklet id에 따른 closure를 찾아 이 두 closure를 서로 합친다.
-			Set<TrackletId> left = Funcs.findFirst(idClosures, c -> c.contains(ba.getLeftTrackletId()));
-			Set<TrackletId> right = Funcs.findFirst(idClosures, c -> c.contains(ba.getRightTrackletId()));
+			Set<TrackletId> left = Funcs.findFirst(idClosures, c -> c.contains(ba.getLeftTrackletId())).getOrNull();
+			Set<TrackletId> right = Funcs.findFirst(idClosures, c -> c.contains(ba.getRightTrackletId())).getOrNull();
 			if ( left != null && right == null ) {
 				left.add(ba.getRightTrackletId());
 			}

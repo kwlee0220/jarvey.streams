@@ -99,8 +99,8 @@ public final class TrackletMotion implements KeyedUpdate, Comparable<TrackletMot
 	
 	@Override
 	public String toString() {
-		String enter = Funcs.asNonNull(m_enterZone, "?");
-		String exit = Funcs.asNonNull(m_exitZone, "?");
+		String enter = Funcs.toNonNull(m_enterZone, "?");
+		String exit = Funcs.toNonNull(m_exitZone, "?");
 		return String.format("%s[%s -> %s, seq=%s, motion=%s, frame_idx=%d, ts=%d]",
 								getTrackletId(), enter, exit, m_zoneSequence, m_motion,
 								m_frameIndex, m_ts);

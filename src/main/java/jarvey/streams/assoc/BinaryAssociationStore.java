@@ -73,7 +73,7 @@ public class BinaryAssociationStore {
 	 * 			포함하는 association이 없는 경우는 supplier를 호출한 결과
 	 */
 	public Record getOrEmpty(TrackletId trkId) {
-		return Funcs.asNonNull(m_store.get(trkId), Record::new);
+		return Funcs.toNonNull(m_store.get(trkId), Record::new);
 	}
 	
 	public BinaryAssociationCollection load() {

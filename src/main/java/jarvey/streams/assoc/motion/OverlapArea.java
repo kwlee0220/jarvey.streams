@@ -83,7 +83,7 @@ public class OverlapArea {
 	}
 	
 	public double getDistanceThreshold(String node) {
-		return Funcs.asNonNull(m_distanceThresholds.get(node), Double.MAX_VALUE);
+		return Funcs.toNonNull(m_distanceThresholds.get(node), Double.MAX_VALUE);
 	}
 	
 	public boolean containsNode(String nodeId) {

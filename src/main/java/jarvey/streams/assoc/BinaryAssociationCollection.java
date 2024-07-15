@@ -79,8 +79,8 @@ public class BinaryAssociationCollection implements Iterable<BinaryAssociation> 
 	public Indexed<BinaryAssociation> getIndexed(Set<TrackletId> key) {
 		return FStream.from(m_associations)
 						.zipWithIndex()
-						.findFirst(t -> key.equals(t._1.getTracklets()))
-						.map(t -> Indexed.with(t._1, t._2))
+						.findFirst(t -> key.equals(t.value().getTracklets()))
+						.map(t -> Indexed.with(t.value(), t.index()))
 						.getOrNull();
 	}
 	

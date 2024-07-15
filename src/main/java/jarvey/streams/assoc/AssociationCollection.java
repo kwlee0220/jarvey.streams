@@ -86,8 +86,8 @@ public class AssociationCollection implements Iterable<Association>  {
 	public Indexed<Association> getIndexed(Set<TrackletId> key) {
 		return FStream.from(m_associations)
 						.zipWithIndex()
-						.findFirst(t -> key.equals(t._1.getTracklets()))
-						.map(t -> Indexed.with(t._1, t._2))
+						.findFirst(t -> key.equals(t.value().getTracklets()))
+						.map(t -> Indexed.with(t.value(), t.index()))
 						.getOrNull();
 	}
 	
@@ -105,7 +105,7 @@ public class AssociationCollection implements Iterable<Association>  {
 	public FStream<Indexed<Association>> findIndexedAll(TrackletId key) {
 		return FStream.from(m_associations)
 						.zipWithIndex()
-						.map(t -> Indexed.with(t._1, t._2))
+						.map(t -> Indexed.with(t.value(), t.index()))
 						.filter(idxed -> idxed.value().containsTracklet(key));
 	}
 	

@@ -532,7 +532,7 @@ class FeatureBinaryTrackletAssociator
 	}
 	
 	private void downloadCandidateFeatures(List<TrackletId> trkIds) {
-		List<TrackletId> missingTrkIds = Funcs.toNonNull(trkIds, Collections.emptyList());
+		List<TrackletId> missingTrkIds = FOption.getOrElse(trkIds, Collections.emptyList());
 		if ( missingTrkIds.size() > 0 ) {
 			List<String> missingKeys = Funcs.map(missingTrkIds, TrackletId::toString);
 			for ( KeyedUpdateIndex index: m_featureIndexes.readIndexes(missingKeys).values() ) {

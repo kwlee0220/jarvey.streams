@@ -11,7 +11,7 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
 import utils.DataUtils;
-import utils.func.Funcs;
+import utils.func.FOption;
 import utils.func.Tuple;
 import utils.stream.FStream;
 import utils.stream.KVFStream;
@@ -83,7 +83,7 @@ public class OverlapArea {
 	}
 	
 	public double getDistanceThreshold(String node) {
-		return Funcs.toNonNull(m_distanceThresholds.get(node), Double.MAX_VALUE);
+		return FOption.getOrElse(m_distanceThresholds.get(node), Double.MAX_VALUE);
 	}
 	
 	public boolean containsNode(String nodeId) {

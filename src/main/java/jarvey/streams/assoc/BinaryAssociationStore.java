@@ -17,6 +17,7 @@ import com.google.common.collect.Sets;
 import com.google.gson.annotations.SerializedName;
 
 import utils.Indexed;
+import utils.func.FOption;
 import utils.func.Funcs;
 import utils.func.Tuple;
 import utils.stream.FStream;
@@ -73,7 +74,7 @@ public class BinaryAssociationStore {
 	 * 			포함하는 association이 없는 경우는 supplier를 호출한 결과
 	 */
 	public Record getOrEmpty(TrackletId trkId) {
-		return Funcs.toNonNull(m_store.get(trkId), Record::new);
+		return FOption.getOrElse(m_store.get(trkId), Record::new);
 	}
 	
 	public BinaryAssociationCollection load() {

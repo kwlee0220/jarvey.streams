@@ -5,7 +5,7 @@ import javax.annotation.Nullable;
 import com.google.common.base.Objects;
 import com.google.gson.annotations.SerializedName;
 
-import utils.func.Funcs;
+import utils.func.FOption;
 
 import jarvey.streams.model.TrackletId;
 import jarvey.streams.updatelog.KeyedUpdate;
@@ -99,8 +99,8 @@ public final class TrackletMotion implements KeyedUpdate, Comparable<TrackletMot
 	
 	@Override
 	public String toString() {
-		String enter = Funcs.toNonNull(m_enterZone, "?");
-		String exit = Funcs.toNonNull(m_exitZone, "?");
+		String enter = FOption.getOrElse(m_enterZone, "?");
+		String exit = FOption.getOrElse(m_exitZone, "?");
 		return String.format("%s[%s -> %s, seq=%s, motion=%s, frame_idx=%d, ts=%d]",
 								getTrackletId(), enter, exit, m_zoneSequence, m_motion,
 								m_frameIndex, m_ts);

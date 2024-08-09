@@ -140,12 +140,10 @@ shadowJar {
 }
 
 task sourceJar(type: Jar) {
-	classifier 'sources'
 	from sourceSets.main.allSource
 }
 
 task javadocJar(type: Jar) {
-	classifier 'javadoc'
 	from javadoc.destinationDir
 }
 

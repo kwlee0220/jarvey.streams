@@ -8,7 +8,7 @@ import org.apache.kafka.streams.state.KeyValueIterator;
 import org.apache.kafka.streams.state.QueryableStoreTypes;
 import org.apache.kafka.streams.state.ReadOnlyKeyValueStore;
 
-import utils.func.KeyValue;
+import utils.KeyValue;
 import utils.stream.FStream;
 
 /**

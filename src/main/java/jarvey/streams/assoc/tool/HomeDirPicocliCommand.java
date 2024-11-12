@@ -8,8 +8,8 @@ import org.slf4j.LoggerFactory;
 
 import utils.LoggerSettable;
 import utils.UsageHelp;
-import utils.Utilities;
 import utils.func.FOption;
+import utils.io.FileUtils;
 
 import picocli.CommandLine.Help.Ansi;
 import picocli.CommandLine.Mixin;
@@ -42,7 +42,7 @@ public abstract class HomeDirPicocliCommand implements Runnable, LoggerSettable 
 			m_homeDir = m_homeDirEnvVarName
 								.flatMap(env -> FOption.ofNullable(System.getenv(env)))
 								.map(Paths::get)
-								.getOrElse(Utilities.getCurrentWorkingDir().toPath());
+								.getOrElse(FileUtils.getCurrentWorkingDirectory().toPath());
 		}
 		
 		return m_homeDir;

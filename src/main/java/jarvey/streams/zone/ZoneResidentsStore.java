@@ -2,7 +2,7 @@ package jarvey.streams.zone;
 
 import java.util.List;
 
-import utils.func.KeyValue;
+import utils.KeyValue;
 
 
 /**

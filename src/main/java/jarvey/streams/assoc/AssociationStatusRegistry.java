@@ -5,7 +5,7 @@ import java.util.Map;
 import com.google.common.collect.Maps;
 
 import utils.func.FOption;
-import utils.stream.FStream;
+import utils.stream.KeyValueFStream;
 
 import jarvey.streams.model.Timestamped;
 import jarvey.streams.model.TrackletId;
@@ -45,9 +45,9 @@ public class AssociationStatusRegistry {
 	
 	@Override
 	public String toString() {
-		return FStream.from(m_statusMap)
-					.map((id, status) -> ""+status)
-					.join(", ");
+		return KeyValueFStream.from(m_statusMap)
+								.map((id, status) -> ""+status)
+								.join(", ");
 	}
 	
 	public class Status implements Timestamped {

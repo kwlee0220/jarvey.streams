@@ -28,7 +28,7 @@ import com.google.common.collect.Range;
 import utils.UnitUtils;
 import utils.geo.util.GeoUtils;
 import utils.stream.FStream;
-import utils.stream.KVFStream;
+import utils.stream.KeyValueFStream;
 
 import io.confluent.common.utils.TestUtils;
 
@@ -50,9 +50,9 @@ public class TestZoneTracker {
 	private static Map<String,Polygon> loadZones() throws Exception {
 		Map<String,Object> zones = new Yaml().load(new FileReader("zones.yml"));
 		Map<String,Object> map = (Map<String,Object>)zones.get("zones");
-		return KVFStream.from(map)
-						.mapValue(v -> loadPolygon((List)v))
-						.toMap();
+		return KeyValueFStream.from(map)
+								.mapValue(v -> loadPolygon((List)v))
+								.toMap();
 	}
 	
 	private static double asDouble(Object v) {
@@ -82,9 +82,9 @@ public class TestZoneTracker {
 	public static void main(String... args) throws Exception {
 		Map<String,String> envs = System.getenv();
 		
-		List<Zone> zones = KVFStream.from(loadZones())
-									.map((zid, region) -> new Zone(zid, region))
-									.toList();
+		List<Zone> zones = KeyValueFStream.from(loadZones())
+											.map((zid, region) -> new Zone(zid, region))
+											.toList();
 		
 		String topic = "node-tracks";
 		Duration pollTimeout = Duration.ofMillis(1000);

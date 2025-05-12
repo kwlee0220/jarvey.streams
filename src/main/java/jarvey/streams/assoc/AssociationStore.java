@@ -12,6 +12,8 @@ import org.apache.kafka.streams.kstream.KeyValueMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import io.reactivex.rxjava3.core.Observable;
+
 import utils.func.Funcs;
 import utils.jdbc.JdbcProcessor;
 import utils.jdbc.JdbcRowSource;
@@ -19,8 +21,6 @@ import utils.stream.FStream;
 
 import jarvey.streams.model.TrackletId;
 import jarvey.streams.serialization.json.GsonUtils;
-
-import io.reactivex.rxjava3.core.Observable;
 
 /**
  *
@@ -161,9 +161,10 @@ public class AssociationStore implements KeyValueMapper<String, Association, Key
 							.executeQuery(sqlStr)
 							.fstream()
 							// 동일 association 경우에는 json이 동일하므로, json을 기준으로 groupby 수행.
-							.groupByKey(t -> (String)t._2, t -> (String)t._1)
+							.toKeyValueStream(t -> (String)t._2, t -> (String)t._1)
+							.groupByKey()
 							// association별로 소속 tracklet_id들의 리스트 생성됨.
-							.stream()
+							.fstream()
 							.mapKey((json, v) -> GsonUtils.parseJson(json, Association.class))
 							.flatMap((assoc, ids) -> toRecordStream(assoc, ids))
 							.toList();

@@ -10,8 +10,8 @@ import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.TopicPartition;
 
+import utils.Tuple;
 import utils.func.Funcs;
-import utils.func.Tuple;
 import utils.rx.Flowables;
 import utils.stream.FStream;
 

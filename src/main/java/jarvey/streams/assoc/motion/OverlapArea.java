@@ -11,10 +11,10 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
 import utils.DataUtils;
+import utils.Tuple;
 import utils.func.FOption;
-import utils.func.Tuple;
 import utils.stream.FStream;
-import utils.stream.KVFStream;
+import utils.stream.KeyValueFStream;
 
 /**
  * 
@@ -41,9 +41,9 @@ public class OverlapArea {
 
 		Map<String,Object> distanceMap = (Map<String,Object>)entries.get("distance_threshold");
 		if ( distanceMap != null ) {
-			KVFStream.from(distanceMap)
-					.mapValue(DataUtils::asDouble)
-					.forEach(area::addDistanceThreshold);
+			KeyValueFStream.from(distanceMap)
+							.mapValue(DataUtils::asDouble)
+							.forEach(area::addDistanceThreshold);
 		}
 		
 		return area;

@@ -8,7 +8,7 @@ import com.google.common.collect.Maps;
 
 import utils.Holder;
 import utils.func.FOption;
-import utils.stream.KVFStream;
+import utils.stream.KeyValueFStream;
 
 /**
  * 
@@ -45,8 +45,8 @@ public class LastUpdated<K> {
 		return FOption.ofNullable(m_table.remove(key)).map(Holder::get).getOrNull();
 	}
 	
-	public KVFStream<K,Instant> getAll() {
-		return KVFStream.from(m_table)
-						.mapValue(Holder::get);
+	public KeyValueFStream<K,Instant> getAll() {
+		return KeyValueFStream.from(m_table)
+								.mapValue(Holder::get);
 	}
 }

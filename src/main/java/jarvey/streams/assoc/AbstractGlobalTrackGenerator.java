@@ -116,7 +116,8 @@ public abstract class AbstractGlobalTrackGenerator {
 		// 'delete' track을 먼저 따로 뽑는다.
 		KeyedGroups<Association, LocalTrack> deleteds = FStream.from(ltracks)
 																.filter(lt -> lt.isDeleted())
-																.groupByKey(lt -> findAssociation(lt));
+																.tagKey(lt -> findAssociation(lt))
+																.groupByKey();
 
 		// 버퍼에 수집된 local track들을 association에 따라 분류한다.
 		// 만일 overlap area에 포함되지 않는 track의 경우에는 별도로 지정된
@@ -124,10 +125,11 @@ public abstract class AbstractGlobalTrackGenerator {
 		KeyedGroups<Association, LocalTrack> groups
 				= FStream.from(m_trackBuffer)
 						.filter(lt -> !lt.isDeleted())
-						.groupByKey(lt -> findAssociation(lt));
+						.tagKey(lt -> findAssociation(lt))
+						.groupByKey();
 		
 		// association이 존재하는 경우는 동일 assoication끼리 묶어 평균 값을 사용한다.
-		List<GlobalTrack> gtracks = groups.stream()
+		List<GlobalTrack> gtracks = groups.fstream()
 											.filter(kv -> kv.key() != null)
 											.map(kv -> average(kv.key(), kv.value()))
 											.toList();
@@ -136,14 +138,15 @@ public abstract class AbstractGlobalTrackGenerator {
 		List<LocalTrack> unassociateds = groups.remove(null)
 												.getOrElse(Collections.emptyList());
 		FStream.from(unassociateds)
-				.groupByKey(lt -> lt.getTrackletId())
-				.stream()
+				.tagKey(lt -> lt.getTrackletId())
+				.groupByKey()
+				.fstream()
 				.map(kv -> average(kv.value()))
 				.forEach(gtracks::add);
 		
 		// delete event의 경우는 association 별로 소속 tracklet이 모두 delete되는
 		// 경우에만 delete global track을 추가하되, 이때도 association id를 사용한다.
-		deleteds.stream()
+		deleteds.fstream()
 				.flatMap(kv -> FStream.from(handleTrackletDeleted((Association)kv.key(), kv.value())))
 				.forEach(gtracks::add);
 		

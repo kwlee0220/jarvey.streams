@@ -133,11 +133,16 @@ public class GlobalTrackGenerator implements KafkaConsumerRecordProcessor<String
 			}
 			m_pendingWindows.remove(0);
 			
-			Funcs.groupBy(window.value(), PendingNodeTrack::getAssociationId)
-					.stream()
+			FStream.from(window.value())
+					.tagKey(PendingNodeTrack::getAssociationId)
+					.groupByKey()
+					.fstream()
 					.forEach((aid, batch) -> processAssociation(aid, batch).forEach(this::publish));
-			Funcs.groupBy(window.value(), pt -> pt.m_tpart)
-					.stream()
+			
+			FStream.from(window.value())
+					.tagKey(pt -> pt.m_tpart)
+					.groupByKey()
+					.fstream()
 					.mapValue(lst -> FStream.from(lst).mapToLong(ptrack -> ptrack.m_topicOffset).max().get())
 					.forEach((tp, of) -> result.add(tp, of));
 		}
@@ -184,8 +189,9 @@ public class GlobalTrackGenerator implements KafkaConsumerRecordProcessor<String
 		}
 		else {
 			FStream.from(supports)
-					.groupByKey(pt -> pt.m_track.getTrackletId())
-					.stream()
+					.tagKey(pt -> pt.m_track.getTrackletId())
+					.groupByKey()
+					.fstream()
 					.map((tid, ptracks) -> average(null, ptracks))
 					.forEach(gtracks::add);
 		}

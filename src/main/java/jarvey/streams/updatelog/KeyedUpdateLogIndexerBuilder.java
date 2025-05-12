@@ -15,7 +15,7 @@ import com.google.common.collect.Maps;
 
 import utils.func.FOption;
 import utils.jdbc.JdbcProcessor;
-import utils.stream.FStream;
+import utils.stream.KeyValueFStream;
 
 import jarvey.streams.processor.KafkaConsumerRecordProcessor;
 import jarvey.streams.processor.KafkaTopicPartitionProcessor.ProcessResult;
@@ -108,9 +108,9 @@ public class KeyedUpdateLogIndexerBuilder<T extends KeyedUpdate>
 	}
 	
 	private FOption<IndexRecord> getOldestIndex() {
-		return FStream.from(m_entries)
-						.map((k,v) -> v)
-						.min(idx -> idx.m_firstOffset);
+		return KeyValueFStream.from(m_entries)
+								.map((k,v) -> v)
+								.min(idx -> idx.m_firstOffset);
 	}
 	
 	private static final class IndexRecord {

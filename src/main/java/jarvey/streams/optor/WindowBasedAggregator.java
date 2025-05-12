@@ -7,7 +7,7 @@ import java.util.function.Supplier;
 
 import com.google.common.collect.Maps;
 
-import utils.func.Tuple;
+import utils.Tuple;
 import utils.stream.FStream;
 
 import jarvey.streams.Aggregator;

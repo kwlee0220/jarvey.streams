@@ -17,9 +17,9 @@ import com.google.common.collect.Sets;
 import com.google.gson.annotations.SerializedName;
 
 import utils.Indexed;
+import utils.Tuple;
 import utils.func.FOption;
 import utils.func.Funcs;
-import utils.func.Tuple;
 import utils.stream.FStream;
 
 import jarvey.streams.MockKeyValueStore;

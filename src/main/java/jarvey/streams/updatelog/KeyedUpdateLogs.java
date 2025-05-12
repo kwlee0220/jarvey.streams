@@ -24,6 +24,7 @@ import utils.func.FOption;
 import utils.jdbc.JdbcProcessor;
 import utils.jdbc.JdbcRowSource;
 import utils.stream.FStream;
+import utils.stream.FStreamable;
 
 import jarvey.streams.model.Range;
 import jarvey.streams.rx.KafkaPoller;
@@ -34,7 +35,7 @@ import jarvey.streams.rx.KafkaUtils;
  *
  * @author Kang-Woo Lee (ETRI)
  */
-public class KeyedUpdateLogs<T extends KeyedUpdate> {
+public class KeyedUpdateLogs<T extends KeyedUpdate> implements FStreamable<KeyedUpdateIndex>{
 	private static final KafkaPoller DEFAULT_POLLER = KafkaPoller.stopOnTimeout(Duration.ofSeconds(1))
 																	.initialTimeout(Duration.ofSeconds(5));
 	

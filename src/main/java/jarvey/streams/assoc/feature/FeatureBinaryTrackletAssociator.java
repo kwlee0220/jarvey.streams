@@ -23,9 +23,9 @@ import com.google.common.collect.Ordering;
 
 import utils.LoggerNameBuilder;
 import utils.LoggerSettable;
+import utils.Tuple;
 import utils.func.FOption;
 import utils.func.Funcs;
-import utils.func.Tuple;
 import utils.jdbc.JdbcProcessor;
 import utils.stream.FStream;
 import utils.stream.KeyedGroups;
@@ -341,8 +341,9 @@ class FeatureBinaryTrackletAssociator
 									return tba;
 								});
 					})
-					.groupByKey(tba -> tba.getPeerId().getNodeId())
-					.stream()
+					.tagKey(tba -> tba.getPeerId().getNodeId())
+					.groupByKey()
+					.fstream()
 					.map(kv -> new AssociationGroup(kv.key(), kv.value()))
 					.toList();
 		
@@ -450,8 +451,9 @@ class FeatureBinaryTrackletAssociator
 						.toList();
 		if ( LOGGER_CANDIDATE.isInfoEnabled() ) {
 			String msg = FStream.from(candidates)
-								.groupByKey(NodeTrackletIndex::getNodeId)
-								.stream()
+								.tagKey(NodeTrackletIndex::getNodeId)
+								.groupByKey()
+								.fstream()
 								.map((n,idxes)
 										-> String.format("[%s: %s]", n,
 															FStream.from(idxes)
@@ -517,7 +519,8 @@ class FeatureBinaryTrackletAssociator
 			// 캐슁되지 않는 tracklet을 따로 분리하여 처리한다.
 			//
 			KeyedGroups<Boolean, TrackletId> cases = FStream.from(candidateTrkIds)
-															.groupByKey(k -> m_trackletFeaturesCache.get(k) != null);
+															.tagKey(k -> m_trackletFeaturesCache.get(k) != null)
+															.groupByKey();
 			cases.switcher()
 				 .ifCase(true).consume(this::shareCandidate)	// 이미 cache된 경우는 share-count만 증가.
 				 .ifCase(false).consume(this::downloadCandidateFeatures);

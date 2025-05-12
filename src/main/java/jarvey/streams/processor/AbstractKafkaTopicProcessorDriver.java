@@ -29,7 +29,7 @@ import utils.UnitUtils;
 import utils.func.CheckedRunnable;
 import utils.func.Funcs;
 import utils.func.Unchecked;
-import utils.stream.FStream;
+import utils.stream.KeyValueFStream;
 
 import jarvey.streams.KafkaOptions;
 import jarvey.streams.processor.KafkaTopicPartitionProcessor.ProcessResult;
@@ -216,9 +216,9 @@ public abstract class AbstractKafkaTopicProcessorDriver<K,V>
 						// wall-clock으로 event time을 추정하는 것이기 때문에, 안전하게
 						// 측정된 wall-clock 경과시간의 95% 정도만 경과한 것으로 추정치를 구한다.
 						long expectedTs = currentTs + elapsedMillis;
-						FStream.from(m_processors)
-								.map((tp, proc) -> proc.timeElapsed(tp, expectedTs))
-								.forEach(this::updateCommitOffsets);
+						KeyValueFStream.from(m_processors)
+										.map((tp, proc) -> proc.timeElapsed(tp, expectedTs))
+										.forEach(this::updateCommitOffsets);
 					}
 
 					consumer.commitSync(m_commitOffsets);
@@ -258,16 +258,16 @@ public abstract class AbstractKafkaTopicProcessorDriver<K,V>
 	}
 	
 	private void updateCommitOffsets(ProcessResult result) {
-		FStream.from(result.getTopicOffsetAndMetadataMap())
-				.forEach((tp,meta) -> {
-					OffsetAndMetadata prev = m_commitOffsets.get(tp);
-					if ( prev == null ) {
-						m_commitOffsets.put(tp, meta);
-					}
-					else if ( meta.offset() > prev.offset() ) {
-						m_commitOffsets.put(tp, meta);
-					}
-				});
+		KeyValueFStream.from(result.getTopicOffsetAndMetadataMap())
+						.forEach((tp,meta) -> {
+							OffsetAndMetadata prev = m_commitOffsets.get(tp);
+							if ( prev == null ) {
+								m_commitOffsets.put(tp, meta);
+							}
+							else if ( meta.offset() > prev.offset() ) {
+								m_commitOffsets.put(tp, meta);
+							}
+						});
 	}
 	
 	private void cleanUp() throws InterruptedException, ExecutionException {

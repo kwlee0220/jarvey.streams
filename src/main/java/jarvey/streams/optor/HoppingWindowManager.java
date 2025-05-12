@@ -9,10 +9,10 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.Lists;
 
+import utils.Tuple;
 import utils.Utilities;
 import utils.func.FOption;
 import utils.func.Funcs;
-import utils.func.Tuple;
 import utils.stream.FStream;
 
 /**

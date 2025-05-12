@@ -18,7 +18,7 @@ import utils.LoggerSettable;
 import utils.func.FOption;
 import utils.func.Unchecked;
 import utils.jdbc.JdbcProcessor;
-import utils.stream.FStream;
+import utils.stream.KeyValueFStream;
 
 import jarvey.streams.model.JarveySerdes;
 import jarvey.streams.processor.KafkaConsumerRecordProcessor;
@@ -147,9 +147,9 @@ public class NodeTrackIndexBuilder implements KafkaConsumerRecordProcessor<Strin
 	}
 	
 	private FOption<NodeTrackletIndex> findOldestIndex() {
-		return FStream.from(m_entries)
-						.map((k,v) -> v)
-						.min(idx -> idx.getFirstTopicOffset());
+		return KeyValueFStream.from(m_entries)
+								.map((k,v) -> v)
+								.min(idx -> idx.getFirstTopicOffset());
 	}
 
 	private Connection m_conn = null;

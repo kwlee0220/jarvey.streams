@@ -3,6 +3,7 @@ package jarvey.streams.processor;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
@@ -11,6 +12,7 @@ import org.apache.kafka.common.TopicPartition;
 import com.google.common.collect.Maps;
 
 import utils.stream.FStream;
+import utils.stream.KeyValueFStream;
 
 
 /**
@@ -83,12 +85,13 @@ public interface KafkaTopicPartitionProcessor<K,V> extends AutoCloseable {
 		
 		public ProcessResult combine(ProcessResult result) {
 			Map<TopicPartition,OffsetAndMetadata> topicOffsets = 
-				FStream.from(m_topicOffsets)
-							.concatWith(FStream.from(result.m_topicOffsets))
-							.groupByKey(kv -> kv.key(), kv -> kv.value())
-							.stream()
-							.mapValue(lst -> FStream.from(lst).max(to -> to.offset()).get())
-							.toMap();
+					KeyValueFStream.from(m_topicOffsets)
+									.concatWith(KeyValueFStream.from(result.m_topicOffsets))
+									.toKeyValueStream(Function.identity())
+									.groupByKey()
+									.fstream()
+									.mapValue(lst -> FStream.from(lst).max(to -> to.offset()).get())
+									.toMap();
 			return new ProcessResult(topicOffsets, m_stop || result.m_stop);
 		}
 		

@@ -14,8 +14,8 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
 import utils.Indexed;
+import utils.Tuple;
 import utils.func.Funcs;
-import utils.func.Tuple;
 import utils.stream.FStream;
 
 import jarvey.streams.model.TrackletId;

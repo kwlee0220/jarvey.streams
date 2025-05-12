@@ -16,7 +16,7 @@ import org.slf4j.LoggerFactory;
 import com.google.common.collect.Lists;
 
 import utils.stream.FStream;
-import utils.stream.KVFStream;
+import utils.stream.KeyValueFStream;
 
 /**
  * 
@@ -145,7 +145,7 @@ public class UpdateTimeAssociatedKeyValueStore<K,V> implements KeyValueStore<K,V
 		getLogger().debug("finishing deleting old entries: store={}", m_store.name());
 	}
 	
-	public KVFStream<K,Instant> getLastUpdatedAll() {
+	public KeyValueFStream<K,Instant> getLastUpdatedAll() {
 		return m_lastUpdateds.getAll();
 	}
 	
@@ -175,7 +175,7 @@ public class UpdateTimeAssociatedKeyValueStore<K,V> implements KeyValueStore<K,V
 	}
 	
 	private void checkValidity() {
-		Set<K> keySet1 = m_lastUpdateds.getAll().toKeyStream().toSet();
+		Set<K> keySet1 = m_lastUpdateds.getAll().keys().toSet();
 		Set<K> keySet2 = FStream.from(m_store.all()).map(kv -> kv.key).toSet();
 		if ( !keySet1.equals(keySet2) ) {
 			getLogger().warn("incompatible stores: name={}, state-store={}, last-updateds={}",

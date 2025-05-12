@@ -15,8 +15,8 @@ import org.slf4j.Logger;
 import com.google.common.collect.Lists;
 
 import utils.LoggerNameBuilder;
+import utils.Tuple;
 import utils.func.Either;
-import utils.func.Tuple;
 import utils.stream.FStream;
 
 import jarvey.streams.assoc.BinaryAssociation;
@@ -117,8 +117,9 @@ public class MotionBinaryTrackletAssociator
 		// Expire된 window에 속한 모든 node-track event들을 그것이 속한
 		// overlap-area에 따라 grouping한다.
 		return FStream.from(wtaggeds.value())
-						.groupByKey(TaggedTrack::area, TaggedTrack::track)
-						.stream()
+						.toKeyValueStream(TaggedTrack::area, TaggedTrack::track)
+						.groupByKey()
+						.fstream()
 						.map((a, bkt) -> KeyValue.pair(a, Windowed.of(wtaggeds.window(), bkt)))
 						.toList();
 	}
@@ -139,8 +140,9 @@ public class MotionBinaryTrackletAssociator
 		
 		if ( LOGGER_WINDOW.isInfoEnabled() ) {
 			String trksStr = FStream.from(tracks)
-									.groupByKey(NodeTrack::getNodeId)
-									.stream()
+									.tagKey(NodeTrack::getNodeId)
+									.groupByKey()
+									.fstream()
 									.map((n,trks) -> toTracksInNodeMsg(n, trks))
 									.sort(Tuple::_1)
 									.map(t -> String.format("%d[%s]", t._1, t._2))
@@ -158,15 +160,17 @@ public class MotionBinaryTrackletAssociator
 			= FStream.from(tracks)
 					.filter(NodeTrack::isDeleted)
 					.filter(t -> (t.getTimestamp()-window.beginTime()) < advanceMillis)
-					.toMap(NodeTrack::getTrackletId,
-							trk -> TrackletDeleted.of(trk.getTrackletId(), trk.getTimestamp()));
+					.toKeyValueStream(NodeTrack::getTrackletId,
+										trk -> TrackletDeleted.of(trk.getTrackletId(), trk.getTimestamp()))
+					.toMap();
 		
 		List<Record<String,Either<BinaryAssociation, TrackletDeleted>>> outRecords = Lists.newArrayList();
 		
 		List<TrackSlot> slots = FStream.from(tracks)
 										.filterNot(NodeTrack::isDeleted)
-										.groupByKey(NodeTrack::getTrackletId)
-										.stream()
+										.tagKey(NodeTrack::getTrackletId)
+										.groupByKey()
+										.fstream()
 										.map(TrackSlot::new)
 										.toList();
 		while ( slots.size() >= 2 ) {

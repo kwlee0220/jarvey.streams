@@ -31,7 +31,9 @@ public class ZoneEventGenerator implements ValueMapper<LineTrack, Iterable<ZoneE
 	ZoneEventGenerator(List<Zone> zones) {
 		checkArgument(zones.size() > 0, "# of zones is zero");
 		
-		m_zones = FStream.from(zones).toMap(z -> z.getId());
+		m_zones = FStream.from(zones)
+						.tagKey(z -> z.getId())
+						.toMap();
 	}
 
 	@Override

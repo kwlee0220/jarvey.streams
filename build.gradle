@@ -85,7 +85,7 @@ dependencies {
 	
 	implementation "com.google.guava:guava:${guava_version}"
 	
-	// Logback with SLF4j
+	// Logback
 	testImplementation "ch.qos.logback:logback-classic:${logback_version}"
 	
 //	implementation "org.apache.logging.log4j:log4j-api:${log4j_version}"

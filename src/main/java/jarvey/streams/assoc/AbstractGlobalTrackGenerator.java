@@ -32,7 +32,7 @@ import jarvey.streams.node.NodeTrack;
 public abstract class AbstractGlobalTrackGenerator {
 	private static final long INTERVAL = 100;
 
-	@Nullable private final OverlapAreaRegistry m_areaRegistry;
+	private final @Nullable OverlapAreaRegistry m_areaRegistry;
 	
 	private final List<LocalTrack> m_trackBuffer = Lists.newArrayList();
 	private long m_firstTs = -1;

@@ -26,7 +26,7 @@ public final class LocalTrack implements ObjectTrack {
 	
 	@SerializedName("node") private final String m_nodeId;
 	@SerializedName("track_id") private final String m_trackId;
-	@SerializedName("location") @Nullable private final Point m_location;
+	@SerializedName("location") private final @Nullable Point m_location;
 	@SerializedName("first_ts") private final long m_firstTs;
 	@SerializedName("ts") private final long m_ts;
 	

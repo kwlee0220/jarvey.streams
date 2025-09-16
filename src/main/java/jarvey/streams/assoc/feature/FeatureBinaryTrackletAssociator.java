@@ -408,11 +408,6 @@ class FeatureBinaryTrackletAssociator
 	}
 	
 	private List<NodeTrackletIndex> findNodeTracksFromIncomingLink(MatchingSession session, IncomingLink link) {
-		// FIXME: 디버깅 후 삭제
-//		if ( session.getTrackletId().equals(TRK_ID) ) {
-//			System.out.print("");
-//		}
-		
 		// 이전 노드에서의 candidate tracklet의 예상 exit 시간 구간을 계산하여
 		// 해당 구간에 exit한 tracklet들을 후보들의 NodeTrackletIndex 정보는 읽어온다.
 		Range<Duration> transRange = link.getTransitionTimeRange();

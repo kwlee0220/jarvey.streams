@@ -52,11 +52,6 @@ public class FinalAssociationSelector implements ValueMapper<TrackletDeleted, It
 			s_logger.debug("tracklet deleted: {}", deleted.getTrackletId());
 		}
 		
-		// FIXME: 디버깅 후 삭제
-		if ( deleted.getTrackletId().equals(TRK_ID) ) {
-			System.out.print("");
-		}
-		
 		List<Association> selectedClosedAssocList = handleTrackDeleted(deleted);
 		
 		// 최종적으로 선택된 association closure에 포함된 tracklet들과 연관된

@@ -7,6 +7,7 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.PriorityQueue;
 import java.util.Properties;
 
@@ -101,7 +102,7 @@ class FeatureBinaryTrackletAssociator
 		TrackletId trkId = tfeat.getTrackletId();
 		
 		if ( tfeat.isDeleted() ) {
-			FOption<BinaryAssociation> bassoc = FOption.empty();
+			Optional<BinaryAssociation> bassoc = Optional.empty();
 			MatchingSession session = m_sessions.get(tfeat.getTrackletId());
 			if ( session != null ) {
 				switch ( session.getState() ) {
@@ -129,7 +130,7 @@ class FeatureBinaryTrackletAssociator
 			}
 			tearDownSession(trkId);
 			
-			return bassoc.toList();
+			return bassoc.map(List::of).orElse(List.of());
 		}
 		
 		// 주어진 feature에 해당하는 MatchingSession을 찾아 새 feature를 추가한다.
@@ -160,7 +161,7 @@ class FeatureBinaryTrackletAssociator
 				PriorityQueue<MatchingSession> queue = m_pendingQueues.get(nodeId);
 				MatchingSession head;
 				while ( (head = queue.peek()) != null && head.getState() == State.READY ) {
-					associate(session).forEach(rets::add);
+					associate(session).ifPresent(rets::add);
 					queue.remove(head);
 					head.setState(State.DISABLED);
 				}
@@ -317,10 +318,10 @@ class FeatureBinaryTrackletAssociator
 		}
 	};
 
-	private FOption<BinaryAssociation> associate(MatchingSession session) {
+	private Optional<BinaryAssociation> associate(MatchingSession session) {
 		return getBestAssociation(session);
 	}
-	private FOption<BinaryAssociation> getBestAssociation(MatchingSession session) {
+	private Optional<BinaryAssociation> getBestAssociation(MatchingSession session) {
 		TrackletId thisTrkId = session.getTrackletId();
 		
 		List<AssociationGroup> assocGroups =
@@ -347,33 +348,33 @@ class FeatureBinaryTrackletAssociator
 					.map(kv -> new AssociationGroup(kv.key(), kv.value()))
 					.toList();
 		
-		return 	FStream.from(assocGroups)
-						.max(grp -> grp.m_bestScore)
-						.map(grp -> grp.selectBestAssociation())
-						.ifPresent(tba -> {
-							m_matches.put(tba.getPeerId(), tba.getAssociation());
-							
-							if ( getLogger().isInfoEnabled() ) {
-								String grpStr = FStream.from(assocGroups)
-														.map(grp -> grp.toString())
-														.join(", ");
-								String msg = String.format("%s: %s -> %s(%.3f)",
-															session.getTrackletId(), grpStr,
-															tba.getPeerId(), tba.getScore());
-								getLogger().info(msg);
-							}
-						})
-						.ifAbsent(() -> {
-							if ( getLogger().isInfoEnabled() ) {
-								String candIdsStr = FStream.from(session.m_assocCandidates.values())
-															.map(TrackletFeatureMatrix::getTrackletId)
-															.join(", ");
-								String msg = String.format("%s: {} -> None (candidates: %s), source={}",
-															session.getTrackletId(), candIdsStr, assocGroups);
-								getLogger().info(msg);
-							}
-						})
-						.map(TaggedAssociation::getAssociation);
+		Optional<TaggedAssociation> bestAssoc =	FStream.from(assocGroups)
+														.max(grp -> grp.m_bestScore)
+														.map(grp -> grp.selectBestAssociation());
+		bestAssoc.ifPresentOrElse(tba -> {
+			m_matches.put(tba.getPeerId(), tba.getAssociation());
+			
+			if ( getLogger().isInfoEnabled() ) {
+				String grpStr = FStream.from(assocGroups)
+										.map(grp -> grp.toString())
+										.join(", ");
+				String msg = String.format("%s: %s -> %s(%.3f)",
+											session.getTrackletId(), grpStr,
+											tba.getPeerId(), tba.getScore());
+				getLogger().info(msg);
+			}
+		}, () -> {
+			if ( getLogger().isInfoEnabled() ) {
+				String candIdsStr = FStream.from(session.m_assocCandidates.values())
+											.map(TrackletFeatureMatrix::getTrackletId)
+											.join(", ");
+				String msg = String.format("%s: {} -> None (candidates: %s), source={}",
+											session.getTrackletId(), candIdsStr, assocGroups);
+				getLogger().info(msg);
+			}
+		});
+		
+		return bestAssoc.map(TaggedAssociation::getAssociation);
 	}
 	
 	private boolean identifyEnterzone(MatchingSession session) {

@@ -5,6 +5,7 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Map;
+import java.util.Optional;
 
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.common.TopicPartition;
@@ -15,7 +16,6 @@ import org.slf4j.LoggerFactory;
 import com.google.common.collect.Maps;
 
 import utils.LoggerSettable;
-import utils.func.FOption;
 import utils.func.Unchecked;
 import utils.jdbc.JdbcProcessor;
 import utils.stream.KeyValueFStream;
@@ -60,9 +60,11 @@ public class NodeTrackIndexBuilder implements KafkaConsumerRecordProcessor<Strin
 		update(track, record.partition(), record.offset());
 
 		// 등록된 index entry 중에서 가장 작은 offset을 찾는다.
-		long offset = findOldestIndex().map(NodeTrackletIndex::getFirstTopicOffset)
-										.ifAbsent(() -> unprepare())
-										.getOrElse(record.offset());
+		Optional<Long> idx = findOldestIndex().map(NodeTrackletIndex::getFirstTopicOffset);
+		if ( idx.isEmpty() ) {
+			unprepare();
+		}
+		long offset = idx.orElse(record.offset());
 		if ( offset > m_lastOffset ) {
 			m_lastOffset = offset;
 			return ProcessResult.of(tpart, offset + 1, false);
@@ -146,7 +148,7 @@ public class NodeTrackIndexBuilder implements KafkaConsumerRecordProcessor<Strin
 		}
 	}
 	
-	private FOption<NodeTrackletIndex> findOldestIndex() {
+	private Optional<NodeTrackletIndex> findOldestIndex() {
 		return KeyValueFStream.from(m_entries)
 								.map((k,v) -> v)
 								.min(idx -> idx.getFirstTopicOffset());

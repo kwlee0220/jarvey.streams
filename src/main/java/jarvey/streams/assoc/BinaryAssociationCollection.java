@@ -134,22 +134,20 @@ public class BinaryAssociationCollection implements Iterable<BinaryAssociation> 
 		}
 		
 		Set<TrackletId> trkIds = assoc.getTracklets();
-		Indexed<BinaryAssociation> found = Funcs.findFirstIndexed(m_associations,
-																ba -> ba.getTracklets().containsAll(trkIds))
-												.getOrNull();
-		if ( found != null ) {
-			if ( found.value().getScore() < assoc.getScore() ) {
-				m_associations.set(found.index(), assoc);
-				return true;
-			}
-			else {
-				return false;
-			}
-		}
-		else {
-			m_associations.add(assoc);
-			return true;
-		}
+		return Funcs.findFirstIndexed(m_associations, ba -> ba.getTracklets().containsAll(trkIds))
+					.map(found -> {
+						if ( found.value().getScore() < assoc.getScore() ) {
+							m_associations.set(found.index(), assoc);
+							return true;
+						}
+						else {
+							return false;
+						}
+					})
+					.orElseGet(() -> {
+						m_associations.add(assoc);
+						return true;
+					});
 	}
 	
 	private boolean addDisallowConflict(BinaryAssociation assoc) {

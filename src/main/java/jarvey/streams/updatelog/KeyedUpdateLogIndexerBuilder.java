@@ -4,6 +4,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Map;
+import java.util.Optional;
 
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.common.TopicPartition;
@@ -13,7 +14,6 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.Maps;
 
-import utils.func.FOption;
 import utils.jdbc.JdbcProcessor;
 import utils.stream.KeyValueFStream;
 
@@ -86,7 +86,7 @@ public class KeyedUpdateLogIndexerBuilder<T extends KeyedUpdate>
 			}
 		}
 		
-		long offset = getOldestIndex().map(idx -> idx.m_firstOffset).getOrElse(record.offset());
+		long offset = getOldestIndex().map(idx -> idx.m_firstOffset).orElse(record.offset());
 		if ( offset > m_lastOffset ) {
 			m_lastOffset = offset;
 			return ProcessResult.of(tpart, offset + 1);
@@ -107,7 +107,7 @@ public class KeyedUpdateLogIndexerBuilder<T extends KeyedUpdate>
 		return update.getTimestamp();
 	}
 	
-	private FOption<IndexRecord> getOldestIndex() {
+	private Optional<IndexRecord> getOldestIndex() {
 		return KeyValueFStream.from(m_entries)
 								.map((k,v) -> v)
 								.min(idx -> idx.m_firstOffset);

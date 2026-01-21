@@ -42,7 +42,7 @@ public class RunningGlobalTrackGenerator extends AbstractGlobalTrackGenerator
 		
 		bestAssocs = bestAssocs.getBestAssociations("global-track-associations");
 		Association best = Funcs.findFirst(bestAssocs, a -> a.containsTracklet(ltrack.getTrackletId()))
-								.getOrNull();
+								.orElse(null);
 		
 		return best;
 	}

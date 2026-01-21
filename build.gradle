@@ -8,8 +8,8 @@ plugins {
 group = 'etri'
 version = '24.01.17'
 
-sourceCompatibility = '11'
-targetCompatibility = '11'
+sourceCompatibility = '17'
+targetCompatibility = '17'
 [compileJava,compileTestJava]*.options*.encoding = 'UTF-8'
 
 protobuf {
@@ -61,6 +61,7 @@ ext {
 	gson_version = '2.9.0'
 	snakeyaml_version = '1.20'
 	picocli_version = '3.9.6'
+	findbugs_version = '3.0.2'
 	
 	geotools_version = '26.1'
 	jts_version = '1.18.2'
@@ -81,6 +82,8 @@ ext {
 dependencies {
 	implementation project(":utils")
 	implementation project(":utils.geo")
+	
+	compileOnly "com.google.code.findbugs:jsr305:${findbugs_version}"
 	
 	implementation "com.google.guava:guava:${guava_version}"
 	

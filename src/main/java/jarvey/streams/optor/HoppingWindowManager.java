@@ -11,7 +11,6 @@ import com.google.common.collect.Lists;
 
 import utils.Tuple;
 import utils.Utilities;
-import utils.func.FOption;
 import utils.func.Funcs;
 import utils.stream.FStream;
 
@@ -114,7 +113,7 @@ public class HoppingWindowManager {
 			// 새로 입력된 timestamp를 기준으로 추가로 생성되어야할 window가 필요한가
 			// 검사하여 필요한 window들을 생성하여 추가한다.
 			// 입력 timestamp가 많이 커진 경우에는 여러 개의 window가 생성될 수도 있다.
-			Window last = FOption.getOrElse(Funcs.getLast(m_windows), () -> addNewWindow(ts));
+			Window last =  Funcs.getLast(m_windows).orElseGet(() -> addNewWindow(ts));
 			while ( true ) {
 				long nextWindowBeginTs = last.beginTime() + m_advanceTime;
 				if ( ts < nextWindowBeginTs ) {

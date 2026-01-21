@@ -67,7 +67,7 @@ public class BinaryAssociationCollection implements Iterable<BinaryAssociation> 
 	 * @return	검색된 association 객체. 존재하지 않는 경우에는 null.
 	 */
 	public BinaryAssociation get(Set<TrackletId> key) {
-		return Funcs.findFirst(m_associations, a -> key.equals(a.getTracklets())).getOrNull();
+		return Funcs.findFirst(m_associations, a -> key.equals(a.getTracklets())).orElse(null);
 	}
 
 	/**
@@ -106,7 +106,7 @@ public class BinaryAssociationCollection implements Iterable<BinaryAssociation> 
 	 * @return	제거된 association 객체. 해당 키의 association 존재하지 않은 경우는 {@code null}.
 	 */
 	public List<BinaryAssociation> removeAll(Collection<TrackletId> key) {
-		return Funcs.removeIf(m_associations, ba -> ba.intersectsTracklet(key));
+		return Funcs.removeAndReturnIf(m_associations, ba -> ba.intersectsTracklet(key));
 	}
 	
 	public boolean add(BinaryAssociation assoc) {
@@ -120,7 +120,7 @@ public class BinaryAssociationCollection implements Iterable<BinaryAssociation> 
 		List<BinaryAssociation> bestAssocList = Lists.newArrayList();
 		while ( sorteds.size() > 0 ) {
 			BinaryAssociation best = sorteds.remove(0);
-			sorteds = Funcs.removeIf(sorteds, ba -> ba.intersectsTracklet(best));
+			sorteds = Funcs.removeAndReturnIf(sorteds, ba -> ba.intersectsTracklet(best));
 		}
 		
 		return bestAssocList;

@@ -1,6 +1,7 @@
 package jarvey.streams.assoc;
 
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -74,7 +75,7 @@ public class AssociationCollection implements Iterable<Association>  {
 	 * @return	검색된 association 객체. 존재하지 않는 경우에는 null.
 	 */
 	public Association get(Set<TrackletId> key) {
-		return Funcs.findFirst(m_associations, a -> key.equals(a.getTracklets())).orElse(null);
+		return Funcs.findFirst(m_associations, a -> key.equals(a.getTracklets()));
 	}
 
 	/**
@@ -110,7 +111,7 @@ public class AssociationCollection implements Iterable<Association>  {
 	}
 	
 	public Association findSuperiorFirst(Association key) {
-		return Funcs.findFirst(m_associations, cl -> cl.isSuperior(key)).orElse(null);
+		return Funcs.findFirst(m_associations, cl -> cl.isSuperior(key));
 	}
 	
 	/**
@@ -132,7 +133,7 @@ public class AssociationCollection implements Iterable<Association>  {
 	}
 	
 	public List<Association> removeInferiors(Association key) {
-		return Funcs.removeAndReturnIf(m_associations, cl -> cl.isInferior(key));
+		return Funcs.removeIf(m_associations, cl -> cl.isInferior(key));
 	}
 	
 	public List<Association> add(Association assoc) {
@@ -243,9 +244,14 @@ public class AssociationCollection implements Iterable<Association>  {
 	public static List<Association> selectBestAssociations(List<Association> assocList) {
 		List<Association> bestAssocList = Lists.newArrayList();
 		
+		Comparator<Association> assocCmptor = Comparator.comparing((Association a) -> a.size())
+														.thenComparing(a -> a.getScore())
+														.reversed();
+		
+		
 		// collection에 속한 모든 association들을 길이와 score 값을 기준을 정렬시킨다.
 		List<Association> sorted = FStream.from(assocList)
-											.sort(a -> Tuple.of(a.size(), a.getScore()), true)
+											.sort(assocCmptor)
 											.toList();
 		
 		// 정렬된 association들을 차례대로 읽어 동일한 tracklet으로 구성된 inferior association들을
@@ -259,7 +265,7 @@ public class AssociationCollection implements Iterable<Association>  {
 			
 			// 정렬이 깨졌을 수 있기 때문에 다시 정렬시킨다.
 			sorted = FStream.from(compatibles)
-							.sort(a -> Tuple.of(a.size(), a.getScore()), true)
+							.sort(assocCmptor)
 							.toList();
 		}
 		

@@ -1,7 +1,5 @@
 package jarvey.streams.zone;
 
-import static utils.Utilities.checkState;
-
 import javax.annotation.Nullable;
 
 import org.locationtech.jts.geom.LineSegment;
@@ -9,6 +7,7 @@ import org.locationtech.jts.geom.Point;
 
 import com.google.gson.annotations.SerializedName;
 
+import utils.Preconditions;
 import utils.geo.util.GeoUtils;
 
 import jarvey.streams.model.ObjectTrack;
@@ -60,13 +59,13 @@ public final class LineTrack implements Timestamped {
 	}
 	
 	public LineSegment getLine() {
-		checkState(isLineTrack(), () -> String.format("not line track: %s", this));
+		Preconditions.checkState(isLineTrack(), "not line track: %s", this);
 		
 		return GeoUtils.toLineSegment(m_startPoint, m_stopPoint);
 	}
 	
 	public Point getPoint() {
-		checkState(isPointTrack(), () -> String.format("not point track: %s", this));
+		Preconditions.checkState(isPointTrack(), "not point track: %s", this);
 		
 		return m_stopPoint;
 	}

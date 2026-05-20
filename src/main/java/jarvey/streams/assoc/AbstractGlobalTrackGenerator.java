@@ -191,7 +191,7 @@ public abstract class AbstractGlobalTrackGenerator {
 	}
 	
 	private GlobalTrack average(List<LocalTrack> ltracks) {
-		LocalTrack repr = Funcs.max(ltracks, LocalTrack::getTimestamp).get();
+		LocalTrack repr = Funcs.max(ltracks, LocalTrack::getTimestamp);
 		String id = repr.getKey();
 		Point avgLoc = GeoUtils.average(Funcs.map(ltracks, LocalTrack::getLocation));
 		
@@ -220,7 +220,7 @@ public abstract class AbstractGlobalTrackGenerator {
 			
 			// Association의 id와 소속 tracklet들 중에서 가장 마지막으로 종료된 tracklet의
 			// timestamp를 이용하여 deleted 이벤트를 생성한다.
-			LocalTrack last = Funcs.max(deleteds, LocalTrack::getTimestamp).get();
+			LocalTrack last = Funcs.max(deleteds, LocalTrack::getTimestamp);
 			GlobalTrack gtrack = new GlobalTrack(assoc.getId(), State.DELETED,
 												null, null, assoc.getFirstTimestamp(), last.getTimestamp());
 			return Collections.singletonList(gtrack);

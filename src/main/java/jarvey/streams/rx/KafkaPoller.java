@@ -1,7 +1,5 @@
 package jarvey.streams.rx;
 
-import static utils.Utilities.checkNotNullArgument;
-
 import java.time.Duration;
 import java.util.function.Consumer;
 
@@ -12,6 +10,7 @@ import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 
+import utils.Preconditions;
 import utils.func.FOption;
 import utils.stream.FStream;
 import utils.stream.FStreams.AbstractFStream;
@@ -60,8 +59,8 @@ public class KafkaPoller {
 		private boolean m_initial = true;
 		
 		Polling(@Nonnull KafkaConsumer<K, V> consumer, @Nonnull Consumer<KafkaConsumer<K, V>> closer) {
-			checkNotNullArgument(consumer);
-			checkNotNullArgument(closer);
+			Preconditions.checkNotNullArgument(consumer, "consumer is null");
+			Preconditions.checkNotNullArgument(closer, "closer is null");
 			
 			m_consumer = consumer;
 			m_closer = closer;

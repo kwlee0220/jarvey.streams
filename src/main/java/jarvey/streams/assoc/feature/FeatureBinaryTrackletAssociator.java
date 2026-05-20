@@ -1,7 +1,5 @@
 package jarvey.streams.assoc.feature;
 
-import static utils.Utilities.checkArgument;
-
 import java.time.Duration;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -24,6 +22,7 @@ import com.google.common.collect.Ordering;
 
 import utils.LoggerNameBuilder;
 import utils.LoggerSettable;
+import utils.Preconditions;
 import utils.Tuple;
 import utils.func.FOption;
 import utils.func.Funcs;
@@ -269,7 +268,7 @@ class FeatureBinaryTrackletAssociator
 		private final double m_bestScore;
 		
 		AssociationGroup(String nodeId, List<TaggedAssociation> assocList) {
-			checkArgument(assocList != null && assocList.size() > 0, "invalid association list");
+			Preconditions.checkArgument(assocList != null && assocList.size() > 0, "invalid association list");
 			
 			m_nodeId = nodeId;
 			m_assocList = assocList;

@@ -187,7 +187,7 @@ public abstract class AbstractKafkaTopicProcessorDriver<K,V>
 							
 							// Kafka에서 읽은 마지막 consumer record에서 timestamp를 읽어서
 							// current timestamp 값을 설정한다.
-							long eventTs = processor.extractTimestamp(Funcs.getLast(recList).get());
+							long eventTs = processor.extractTimestamp(Funcs.getLast(recList));
 							if ( currentTs == lastEventTs ) {
 								// 이전에 추정치를 사용하지 않은 경우.
 								currentTs = Math.max(currentTs, eventTs);

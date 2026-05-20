@@ -10,7 +10,7 @@ import utils.jdbc.JdbcRowSource;
  */
 public class Test2 {
 	public static final void main(String... args) throws Exception {
-		JdbcProcessor proc = JdbcProcessor.parseString("postgresql:localhost:5432:dna:urc2004:dna");
+		JdbcProcessor proc = JdbcProcessor.builderFromCsv("postgresql:localhost:5432:dna:urc2004:dna").build();
 		
 		JdbcRowSource.selectAsString()
 						.from(proc)

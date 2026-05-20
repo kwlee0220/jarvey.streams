@@ -67,7 +67,7 @@ public class BinaryAssociationCollection implements Iterable<BinaryAssociation> 
 	 * @return	검색된 association 객체. 존재하지 않는 경우에는 null.
 	 */
 	public BinaryAssociation get(Set<TrackletId> key) {
-		return Funcs.findFirst(m_associations, a -> key.equals(a.getTracklets())).orElse(null);
+		return Funcs.findFirst(m_associations, a -> key.equals(a.getTracklets()));
 	}
 
 	/**
@@ -106,7 +106,7 @@ public class BinaryAssociationCollection implements Iterable<BinaryAssociation> 
 	 * @return	제거된 association 객체. 해당 키의 association 존재하지 않은 경우는 {@code null}.
 	 */
 	public List<BinaryAssociation> removeAll(Collection<TrackletId> key) {
-		return Funcs.removeAndReturnIf(m_associations, ba -> ba.intersectsTracklet(key));
+		return Funcs.removeIf(m_associations, ba -> ba.intersectsTracklet(key));
 	}
 	
 	public boolean add(BinaryAssociation assoc) {
@@ -120,7 +120,7 @@ public class BinaryAssociationCollection implements Iterable<BinaryAssociation> 
 		List<BinaryAssociation> bestAssocList = Lists.newArrayList();
 		while ( sorteds.size() > 0 ) {
 			BinaryAssociation best = sorteds.remove(0);
-			sorteds = Funcs.removeAndReturnIf(sorteds, ba -> ba.intersectsTracklet(best));
+			sorteds = Funcs.removeIf(sorteds, ba -> ba.intersectsTracklet(best));
 		}
 		
 		return bestAssocList;
@@ -134,20 +134,21 @@ public class BinaryAssociationCollection implements Iterable<BinaryAssociation> 
 		}
 		
 		Set<TrackletId> trkIds = assoc.getTracklets();
-		return Funcs.findFirstIndexed(m_associations, ba -> ba.getTracklets().containsAll(trkIds))
-					.map(found -> {
-						if ( found.value().getScore() < assoc.getScore() ) {
-							m_associations.set(found.index(), assoc);
-							return true;
-						}
-						else {
-							return false;
-						}
-					})
-					.orElseGet(() -> {
-						m_associations.add(assoc);
-						return true;
-					});
+		Indexed<BinaryAssociation> found = Funcs.findFirstIndexed(m_associations,
+																	ba -> ba.getTracklets().containsAll(trkIds));
+		if ( found != null ) {
+			if ( found.value().getScore() < assoc.getScore() ) {
+				m_associations.set(found.index(), assoc);
+				return true;
+			}
+			else {
+				return false;
+			}
+		}
+		else {
+			m_associations.add(assoc);
+			return true;
+		}
 	}
 	
 	private boolean addDisallowConflict(BinaryAssociation assoc) {

@@ -20,7 +20,7 @@ import jarvey.streams.updatelog.KeyedUpdateLogs;
  */
 public class TestKeyedUpdateLogs {
 	public static final void main(String... args) throws Exception {
-		JdbcProcessor proc = JdbcProcessor.parseString("postgresql:localhost:5432:dna:urc2004:dna");
+		JdbcProcessor proc = JdbcProcessor.builderFromCsv("postgresql:localhost:5432:dna:urc2004:dna").build();
 		
 		Properties props = new Properties();
 		props.put(ConsumerConfig.GROUP_ID_CONFIG, "xxx3");

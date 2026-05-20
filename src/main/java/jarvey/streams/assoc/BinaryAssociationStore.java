@@ -180,10 +180,13 @@ public class BinaryAssociationStore {
 		}
 		
 		public void add(BinaryAssociation assoc) {
-			Funcs.findFirstIndexed(this.association, assoc::match)
-				.ifPresentOrElse(
-					found -> this.association.set(found.index(), assoc),
-					() -> this.association.add(assoc));
+			var found = Funcs.findFirstIndexed(this.association, assoc::match);
+			if ( found != null ) {
+				this.association.set(found.index(), assoc);
+			}
+			else {
+				this.association.add(assoc);
+			}
 		}
 		
 		public BinaryAssociation remove(BinaryAssociation assoc) {

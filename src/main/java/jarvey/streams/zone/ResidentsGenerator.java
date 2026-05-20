@@ -1,7 +1,5 @@
 package jarvey.streams.zone;
 
-import static utils.Utilities.checkState;
-
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.Collections;
@@ -17,6 +15,7 @@ import org.apache.kafka.streams.state.KeyValueStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import utils.Preconditions;
 import utils.func.FOption;
 import utils.func.Funcs;
 import utils.stream.FStream;
@@ -68,7 +67,7 @@ public class ResidentsGenerator implements ValueTransformer<ZoneEvent, Iterable<
 					residents = Collections.singleton(trackId); 
 				}
 				else {
-					checkState(residents.contains(trackId));
+					Preconditions.checkState(residents.contains(trackId), "residents should contains tarck %s", trackId);
 					residents = Funcs.addCopy(residents, trackId);
 				}
 				

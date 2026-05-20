@@ -1,7 +1,5 @@
 package jarvey.streams.updatelog;
 
-import static utils.Utilities.checkNotNullArgument;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -20,6 +18,7 @@ import org.apache.kafka.streams.KeyValue;
 
 import com.google.common.collect.Maps;
 
+import utils.Preconditions;
 import utils.func.FOption;
 import utils.jdbc.JdbcProcessor;
 import utils.jdbc.JdbcRowSource;
@@ -118,7 +117,7 @@ public class KeyedUpdateLogs<T extends KeyedUpdate> implements FStreamable<Keyed
 	 * @return		Update event 스트림.
 	 */
 	public FStream<KeyValue<String,T>> streamUpdatesOfIndex(@Nonnull KeyedUpdateIndex index) {
-		checkNotNullArgument(index);
+		Preconditions.checkNotNullArgument(index, "update index is null");
 		
 		TopicPartition tpart = new TopicPartition(m_topic, index.getPartitionNumber());
 		long firstOffset = index.getTopicOffsetRange().min();

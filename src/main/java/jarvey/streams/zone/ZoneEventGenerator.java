@@ -1,8 +1,5 @@
 package jarvey.streams.zone;
 
-import static utils.Utilities.checkArgument;
-import static utils.Utilities.checkState;
-
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -16,7 +13,8 @@ import org.locationtech.jts.geom.Point;
 
 import com.google.common.collect.Lists;
 
-import utils.func.FLists;
+import utils.Preconditions;
+import utils.func.Funcs;
 import utils.geo.util.GeoUtils;
 import utils.stream.FStream;
 
@@ -29,7 +27,7 @@ public class ZoneEventGenerator implements ValueMapper<LineTrack, Iterable<ZoneE
 	private final Map<String,Zone> m_zones;
 	
 	ZoneEventGenerator(List<Zone> zones) {
-		checkArgument(zones.size() > 0, "# of zones is zero");
+		Preconditions.checkArgument(zones.size() > 0, "# of zones is zero");
 		
 		m_zones = FStream.from(zones)
 						.tagKey(z -> z.getId())
@@ -50,7 +48,7 @@ public class ZoneEventGenerator implements ValueMapper<LineTrack, Iterable<ZoneE
 					.map(zone -> new ZoneEvent(lineTrack.getId(), ZoneLineRelation.Entered,
 												zone.getId(), lineTrack.getTimestamp()))
 					.toList();
-			checkState(result.size() <= 1);
+			Preconditions.checkState(result.size() <= 1);
 			if ( result.size() == 1 ) {
 				return result;
 			}
@@ -83,14 +81,14 @@ public class ZoneEventGenerator implements ValueMapper<LineTrack, Iterable<ZoneE
 			List<ZoneEvent> outEvents = Lists.newArrayList();
 			
 			List<List<ZoneEvent>> branches
-					= FLists.branch(zoneEvents,
+					= Funcs.branch(zoneEvents,
 									zev -> zev.getRelation() == ZoneLineRelation.Left,
 									zev -> zev.getRelation() == ZoneLineRelation.Through,
 									zev -> zev.getRelation() == ZoneLineRelation.Entered);
 
 			// 일단 left event가 존재하는가 확인하여 이를 첫번째로 삽입함.
 			List<ZoneEvent> leftEvents = branches.get(0);
-			checkState(leftEvents.size() <= 1);
+			Preconditions.checkState(leftEvents.size() <= 1);
 			outEvents.addAll(leftEvents);
 			
 			// through event를 찾아내어 다음으로 삽입한다.
@@ -110,7 +108,7 @@ public class ZoneEventGenerator implements ValueMapper<LineTrack, Iterable<ZoneE
 			
 			// 마지막으로 enter event가 존재하는가 확인하여 이들을 발송함.
 			List<ZoneEvent> enterEvents = branches.get(2);
-			checkState(enterEvents.size() <= 1);
+			Preconditions.checkState(enterEvents.size() <= 1);
 			outEvents.addAll(enterEvents);
 			
 			return outEvents;

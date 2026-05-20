@@ -1,7 +1,5 @@
 package jarvey.streams.assoc;
 
-import static utils.Utilities.checkArgument;
-
 import java.util.Collections;
 import java.util.List;
 
@@ -12,6 +10,7 @@ import org.locationtech.jts.geom.Point;
 import com.google.common.base.Objects;
 import com.google.gson.annotations.SerializedName;
 
+import utils.Preconditions;
 import utils.func.Funcs;
 import utils.geo.util.GeoUtils;
 import utils.stream.FStream;
@@ -53,12 +52,12 @@ public final class GlobalTrack implements ObjectTrack {
 	};
 	
 	public static final GlobalTrack from(Association assoc, List<LocalTrack> supports) {
-		checkArgument(assoc != null, "assoc is null");
+		Preconditions.checkArgument(assoc != null, "assoc is null");
 		
 		// supporting track들에서 평균 위치를 계산한다.
 		List<Point> pts = Funcs.map(supports, LocalTrack::getLocation);
 		Point avgPt = GeoUtils.average(pts);
-		long ts = Funcs.max(supports, LocalTrack::getTimestamp).get().getTimestamp();
+		long ts = Funcs.max(supports, LocalTrack::getTimestamp).getTimestamp();
 		
 		return new GlobalTrack(assoc.getId(), State.ASSOCIATED, avgPt, supports,
 								assoc.getFirstTimestamp(), ts);
@@ -85,13 +84,13 @@ public final class GlobalTrack implements ObjectTrack {
 			throw new IllegalArgumentException("ltracks contains 'deleted' track.");
 		}
 		
-		LocalTrack leader = Funcs.min(ltracks, LocalTrack::getFirstTimestamp).get();
+		LocalTrack leader = Funcs.min(ltracks, LocalTrack::getFirstTimestamp);
 		
 		// supporting track들에서 평균 위치를 계산한다.
 		List<Point> pts = Funcs.map(ltracks, LocalTrack::getLocation);
 		Point avgPt = GeoUtils.average(pts);
 		
-		long ts = Funcs.max(ltracks, LocalTrack::getTimestamp).get().getTimestamp();
+		long ts = Funcs.max(ltracks, LocalTrack::getTimestamp).getTimestamp();
 		
 		return new GlobalTrack(leader.getKey(), State.ISOLATED, avgPt, null,
 								leader.getFirstTimestamp(), ts);

@@ -9,8 +9,8 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.Lists;
 
+import utils.Preconditions;
 import utils.Tuple;
-import utils.Utilities;
 import utils.func.Funcs;
 import utils.stream.FStream;
 
@@ -49,8 +49,7 @@ public class HoppingWindowManager {
 	}
 	
 	public HoppingWindowManager advanceTime(Duration dur) {
-		Utilities.checkArgument(dur.toMillis() > 0,
-								() -> String.format("invalid advance size: %s", dur));
+		Preconditions.checkArgument(dur.toMillis() > 0, "invalid advance size: %s", dur);
 		m_advanceTime = dur.toMillis();
 		return this;
 	}
@@ -60,8 +59,7 @@ public class HoppingWindowManager {
 	}
 	
 	public HoppingWindowManager graceTime(Duration dur) {
-		Utilities.checkArgument(dur.toMillis() >= 0,
-								() -> String.format("invalid advance size: %s", dur));
+		Preconditions.checkArgument(dur.toMillis() >= 0, "invalid advance size: %s", dur);
 		
 		m_graceTime = dur.toMillis();
 		return this;
@@ -113,7 +111,11 @@ public class HoppingWindowManager {
 			// 새로 입력된 timestamp를 기준으로 추가로 생성되어야할 window가 필요한가
 			// 검사하여 필요한 window들을 생성하여 추가한다.
 			// 입력 timestamp가 많이 커진 경우에는 여러 개의 window가 생성될 수도 있다.
-			Window last =  Funcs.getLast(m_windows).orElseGet(() -> addNewWindow(ts));
+			Window last = Funcs.getLast(m_windows);
+			if ( last == null ) {
+				// 최초 입력 timestamp인 경우에는, 입력 timestamp가 포함되는 window를 생성하여 추가한다.
+				last = addNewWindow(ts);
+			}
 			while ( true ) {
 				long nextWindowBeginTs = last.beginTime() + m_advanceTime;
 				if ( ts < nextWindowBeginTs ) {
@@ -124,7 +126,7 @@ public class HoppingWindowManager {
 			}
 		}
 		else if ( ts < m_currentTs ) {
-			Window window = Funcs.getFirst(m_windows).orElse(null);
+			Window window = Funcs.getFirst(m_windows);
 			if ( window != null && window.beginTime() > ts ) {
 				// too-late data
 				if ( s_logger.isWarnEnabled() ) {

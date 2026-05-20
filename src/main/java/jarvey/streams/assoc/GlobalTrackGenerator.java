@@ -281,8 +281,8 @@ public class GlobalTrackGenerator implements KafkaConsumerRecordProcessor<String
 			
 			// Association의 id와 소속 tracklet들 중에서 가장 마지막으로 종료된 tracklet의
 			// timestamp를 이용하여 deleted 이벤트를 생성한다.
-			LocalTrack last = Funcs.max(deleteds, pt -> pt.m_track.getTimestamp())
-									.map(pt -> LocalTrack.from(pt.m_track)).get();
+			var track = Funcs.max(deleteds, pt -> pt.m_track.getTimestamp());
+			LocalTrack last = LocalTrack.from(track.m_track);
 			GlobalTrack gtrack = new GlobalTrack(assoc.getId(), State.DELETED,
 												null, null, assoc.getFirstTimestamp(), last.getTimestamp());
 			return Collections.singletonList(gtrack);

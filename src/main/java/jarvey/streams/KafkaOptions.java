@@ -1,8 +1,5 @@
 package jarvey.streams;
 
-import static utils.Utilities.checkArgument;
-import static utils.Utilities.checkNotNullArgument;
-
 import java.util.Collections;
 import java.util.Properties;
 import java.util.concurrent.ExecutionException;
@@ -14,6 +11,7 @@ import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.Topology.AutoOffsetReset;
 
+import utils.Preconditions;
 import utils.UnitUtils;
 import utils.func.FOption;
 
@@ -56,7 +54,7 @@ public class KafkaOptions {
 		m_bootstrapServers = FOption.ofNullable(servers);
 	}
 	public void setBootstrapServersIfAbscent(String servers) {
-		checkNotNullArgument(servers);
+		Preconditions.checkNotNullArgument(servers, "bootstrap servers is null");
 		m_bootstrapServers = FOption.of(servers);
 	}
 
@@ -93,7 +91,7 @@ public class KafkaOptions {
 	
 	@Option(names={"--max_poll_records"}, paramLabel="count")
 	public void setMaxPollRecords(int count) {
-		checkArgument(count > 0, "invalid value: " + count);
+		Preconditions.checkArgument(count > 0, "invalid value: " + count);
 		m_maxPollRecords = FOption.of(count);
 	}
 	

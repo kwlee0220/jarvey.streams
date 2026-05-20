@@ -1,7 +1,5 @@
 package jarvey.streams.assoc.motion;
 
-import static utils.Utilities.checkState;
-
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -11,6 +9,7 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
 import utils.DataUtils;
+import utils.Preconditions;
 import utils.Tuple;
 import utils.func.FOption;
 import utils.stream.FStream;
@@ -32,7 +31,7 @@ public class OverlapArea {
 		
 		Object overlaps = entries.get("bindings");
 		for ( List<String> pair: (List<List<String>>)overlaps) {
-			checkState(pair.size() == 2, () -> String.format("Invalid overlap pair: %s", pair));
+			Preconditions.checkState(pair.size() == 2, "Invalid overlap pair: %s", pair);
 			area.addOverlap(pair.get(0), pair.get(1));
 		}
 		

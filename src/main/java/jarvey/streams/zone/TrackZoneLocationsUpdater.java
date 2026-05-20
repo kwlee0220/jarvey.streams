@@ -1,7 +1,5 @@
 package jarvey.streams.zone;
 
-import static utils.Utilities.checkState;
-
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.Collections;
@@ -14,6 +12,7 @@ import org.apache.kafka.streams.state.KeyValueStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import utils.Preconditions;
 import utils.func.FOption;
 import utils.func.Funcs;
 import utils.stream.FStream;
@@ -72,28 +71,28 @@ public class TrackZoneLocationsUpdater implements ValueTransformer<ZoneEvent, It
 		switch ( zev.getRelation() ) {
 			case Unassigned:
 				// 이전 위치가 어떤 zone에도 포함되지 않았어야 한다.
-				checkState(zlocs.size() == 0);
+				Preconditions.checkState(zlocs.size() == 0);
 				newZoneIds = Collections.emptySet();
 				break;
 			case Left:
 				// 추적 대상 물체가 left한 zone에 이미 존재했어야 한다.
-				checkState(zlocs.contains(zev.getZoneId()),
-							() -> String.format("track(%s) has not been in the zone(%s)", trackId, zone));
+				Preconditions.checkState(zlocs.contains(zev.getZoneId()),
+										"track(%s) has not been in the zone(%s)", trackId, zone);
 				newZoneIds = Funcs.removeCopy(zlocs.getZoneIds(), zone);
 				break;
 			case Entered:
 				// 추적 대상 물체가 enter한 zone에 존재하지 않았어야 한다.
-				checkState(!zlocs.contains(zone));
+				Preconditions.checkState(!zlocs.contains(zone));
 				newZoneIds = Funcs.addCopy(zlocs.getZoneIds(), zone);
 				break;
 			case Inside:
 				// 추적 대상 물체가 left한 zone에 이미 존재했어야 한다.
-				checkState(zlocs.contains(zev.getZoneId()));
+				Preconditions.checkState(zlocs.contains(zev.getZoneId()));
 				newZoneIds = zlocs.getZoneIds();
 				break;
 			case Through:
 				// 추적 대상 물체가 enter한 zone에 존재하지 않았어야 한다.
-				checkState(!zlocs.contains(zone));
+				Preconditions.checkState(!zlocs.contains(zone));
 				newZoneIds = zlocs.getZoneIds();
 				break;
 			default:

@@ -112,7 +112,7 @@ public class MCMOTNetwork {
 			
 			List<String> transTime = (List<String>)incomingLink.get("transition_time");
 			List<Duration> durList = Funcs.map(transTime,
-												s -> Duration.ofMillis(UnitUtils.parseDurationMillis(s)));
+												s -> Duration.ofMillis(UnitUtils.parseDuration(s).toMillis()));
 			Range<Duration> transTimeRange = Range.between(durList.get(0), durList.get(1));
 			
 			return new IncomingLink(exitNode, exitZone, transTimeRange);

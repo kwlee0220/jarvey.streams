@@ -11,11 +11,11 @@ import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.Topology.AutoOffsetReset;
 
+import picocli.CommandLine.Option;
+
 import utils.Preconditions;
 import utils.UnitUtils;
 import utils.func.FOption;
-
-import picocli.CommandLine.Option;
 
 
 /**
@@ -128,7 +128,7 @@ public class KafkaParameters {
 	
 	@Option(names={"--max_poll_interval"}, paramLabel="interval")
 	public void setMaxPollInterval(String intvlStr) {
-		m_maxPollIntervalMs = FOption.of(UnitUtils.parseDurationMillis(intvlStr));
+		m_maxPollIntervalMs = FOption.of(UnitUtils.parseDuration(intvlStr).toMillis());
 	}
 
 	public FOption<Integer> getMaxPollRecords() {

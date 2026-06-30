@@ -46,8 +46,8 @@ import jarvey.streams.serialization.json.GsonUtils;
 public class GlobalTrackGenerator implements KafkaConsumerRecordProcessor<String,byte[]>, LoggerSettable {
 	private static final Logger s_logger = LoggerFactory.getLogger(GlobalTrackGenerator.class);
 			
-	private static final long WARN_ASSOC_DELAY = UnitUtils.parseDurationMillis("1m");
-	private static final long MAX_ASSOC_DELAY = UnitUtils.parseDurationMillis("5m");
+	private static final long WARN_ASSOC_DELAY = UnitUtils.parseDuration("1m").toMillis();
+	private static final long MAX_ASSOC_DELAY = UnitUtils.parseDuration("5m").toMillis();
 	
 	private final Duration m_maxAssociationDelay;
 	private final ReactiveAssociationCache m_cache;

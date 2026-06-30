@@ -25,12 +25,12 @@ import org.yaml.snakeyaml.Yaml;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Range;
 
+import io.confluent.common.utils.TestUtils;
+
 import utils.UnitUtils;
 import utils.geo.util.GeoUtils;
 import utils.stream.FStream;
 import utils.stream.KeyValueFStream;
-
-import io.confluent.common.utils.TestUtils;
 
 /**
  * 
@@ -96,8 +96,8 @@ public class TestZoneTracker {
 		props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, BytesDeserializer.class.getName());
 		props.put(ConsumerConfig.GROUP_ID_CONFIG, "test_global_locator");
 		props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
-		props.put(ConsumerConfig.FETCH_MAX_WAIT_MS_CONFIG, (int)UnitUtils.parseDurationMillis("10s"));
-		props.put(ConsumerConfig.MAX_POLL_INTERVAL_MS_CONFIG, (int)UnitUtils.parseDurationMillis("30s"));
+		props.put(ConsumerConfig.FETCH_MAX_WAIT_MS_CONFIG, (int)UnitUtils.parseDuration("10s").toMillis());
+		props.put(ConsumerConfig.MAX_POLL_INTERVAL_MS_CONFIG, (int)UnitUtils.parseDuration("30s").toMillis());
 
 		final KafkaConsumer<String, Bytes> consumer = new KafkaConsumer<>(props);
 		

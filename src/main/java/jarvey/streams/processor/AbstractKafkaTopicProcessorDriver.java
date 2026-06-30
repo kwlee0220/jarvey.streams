@@ -22,6 +22,9 @@ import org.slf4j.Logger;
 
 import com.google.common.collect.Maps;
 
+import picocli.CommandLine.Mixin;
+import picocli.CommandLine.Option;
+
 import utils.LoggerNameBuilder;
 import utils.LoggerSettable;
 import utils.Throwables;
@@ -33,9 +36,6 @@ import utils.stream.KeyValueFStream;
 
 import jarvey.streams.KafkaOptions;
 import jarvey.streams.processor.KafkaTopicPartitionProcessor.ProcessResult;
-
-import picocli.CommandLine.Mixin;
-import picocli.CommandLine.Option;
 
 /**
  * 
@@ -72,13 +72,13 @@ public abstract class AbstractKafkaTopicProcessorDriver<K,V>
 		m_groupId = grpId;
 	}
 
-	private Duration m_pollTimeout = Duration.ofMillis(UnitUtils.parseDurationMillis("1s"));
+	private Duration m_pollTimeout = Duration.ofMillis(UnitUtils.parseDuration("1s").toMillis());
 	public Duration getPollTimeout() {
 		return m_pollTimeout;
 	}
 	@Option(names={"--poll_timeout"}, paramLabel="duration", description="default: '1s'")
 	public void setPollTimeout(String durStr) {
-		m_pollTimeout = Duration.ofMillis(UnitUtils.parseDurationMillis(durStr));
+		m_pollTimeout = Duration.ofMillis(UnitUtils.parseDuration(durStr).toMillis());
 	}
 
 	private Duration m_timeout = Duration.ofSeconds(10);
@@ -87,7 +87,7 @@ public abstract class AbstractKafkaTopicProcessorDriver<K,V>
 	}
 	@Option(names={"--initial_timeout"}, paramLabel="duration", description="default: '3s'")
 	public void setTimeout(String durStr) {
-		m_timeout = Duration.ofMillis(UnitUtils.parseDurationMillis(durStr));
+		m_timeout = Duration.ofMillis(UnitUtils.parseDuration(durStr).toMillis());
 	}
 	
 	public KafkaOptions getKafkaOptions() {
